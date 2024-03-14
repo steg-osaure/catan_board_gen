@@ -34,12 +34,12 @@ class BalancedCatanBoardGenerator(toga.App):
             on_press = self.generate_pressed,
         )
 
-#        self.description_buttons = [
-#                toga.Button(
-#                    text = "(?)",
-#                    on_press = self.show_description,
-#                    id = f"{t}_info_button",
-#                ) for t in ["Ressource_clusters", "Balanced_ports", "Number_clusters", "Number_repeats"]]
+        self.description_buttons = [
+                toga.Button(
+                    text = "(?)",
+                    on_press = self.show_description,
+                    id = f"{t}_info_button",
+                ) for t in ["Ressource_clusters", "Balanced_ports", "Number_clusters", "Number_repeats"]]
 
 #        No two bricks or two stone tiles next to one another
 #        No three wood, three sheep or three wheat tiles next to one another
@@ -83,17 +83,17 @@ class BalancedCatanBoardGenerator(toga.App):
             self.number_repeat_switch,
             ]
 
-#        self.switch_boxes = [toga.Box(
-#            children = [b, s],
-#            style = Pack(direction = "row"),
-#            ) for (b, s) in zip(self.description_buttons, self.switches)]
+        self.switch_boxes = [toga.Box(
+            children = [b, s],
+            style = Pack(direction = "row"),
+            ) for (b, s) in zip(self.description_buttons, self.switches)]
 
 
 
 
         self.switch_box = toga.Box(
-            #children = self.switch_boxes + [self.generate_button],
-            children = self.switches + [self.generate_button],
+            children = self.switch_boxes + [self.generate_button],
+            #children = self.switches + [self.generate_button],
             style = Pack(direction = "column"),
             )
 
