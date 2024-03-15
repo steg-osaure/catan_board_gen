@@ -53,13 +53,25 @@ class BalancedCatanBoardGenerator(toga.App):
         # put box in window
         self.main_window.content = main_box
 
+        # options, for the logic:
+        self.options = {
+                "5/6 players": False,
+                "Ressource clusters": True,
+                "Balanced ports": True,
+                "Number clusters": True,
+                "Number repeats": True,
+                }
+
+        #print(self.main_window.size)
+        width, height = self.main_window.size
+
         #self.tile_centers = np.array([(i, j) for j in np.arange(-2, 3)for i in np.arange(max(-2 - j, -2), min(3 - j, 3)) ], dtype=int)
         self.tile_centers = [(i, j) for j in range(-2, 3) for i in range(max(-2 - j, -2), min(3 - j, 3)) ]
         #print(self.tile_centers)
         self.tile_cart = [
                 (
-                    225 + 40 * (i[0] + math.cos(math.pi / 3) * i[1]),
-                    225 + 40 * math.sin(math.pi / 3) * i[1]
+                    width // 2 + 60 * (i[0] + math.cos(math.pi / 3) * i[1]),
+                    width // 2 + 60 * math.sin(math.pi / 3) * i[1]
                 ) for i in self.tile_centers]
         print(self.tile_cart)
 
@@ -69,42 +81,22 @@ class BalancedCatanBoardGenerator(toga.App):
         # show the window
         self.main_window.show()
 
-#    def draw_text(self):
-#        font = toga.Font(family=SANS_SERIF, size=20)
-#        self.text_width, text_height = self.board_canvas.measure_text("Tiberius", font)
-
-#        x = (150 - self.text_width) // 2
-#        y = 175
-
-#        with self.board_canvas.Stroke(
-#            color="REBECCAPURPLE", line_width=4.0
-#        ) as rect_stroker:
-#            self.text_border = rect_stroker.rect(
-#                x - 5,
-#                y - 5,
-#                self.text_width + 10,
-#                text_height + 10,
-#            )
-
-#        with self.board_canvas.Fill(color=rgb(149, 119, 73)) as text_filler:
-#            self.text = text_filler.write_text("Test", x, y, font, Baseline.TOP)
-
     def draw(self):
-        self.draw_hex(10, 30)
 
         for i in self.tile_cart:
             self.draw_hex(i[0], i[1])
 
-    def draw_hex(self, x, y, edge_size = 20, filled = False, fill_color = "BLANK"):
+    def draw_hex(self, x, y, edge_size = 30, filled = False, fill_color = "BLANK"):
         e = edge_size
         a = math.pi / 6.
+
         with self.board_canvas.Stroke(line_width = 2.0) as stroker:
-            with stroker.ClosedPath(x, y) as path:
-                path.line_to(x, y + e)
-                path.line_to(x + e * math.cos(a), y + e * (1 + math.sin(a)))
-                path.line_to(x + 2 * e * math.cos(a), y + e)
-                path.line_to(x + 2 * e * math.cos(a), y)
+            with stroker.ClosedPath(x - e * math.cos(a), y - e * math.sin(a)) as path:
+                path.line_to(x - e * math.cos(a), y + e * math.sin(a))
+                path.line_to(x, y + e )
+                path.line_to(x + e * math.cos(a), y + e * math.sin(a))
                 path.line_to(x + e * math.cos(a), y - e * math.sin(a))
+                path.line_to(x, y - e)
 
 
 
