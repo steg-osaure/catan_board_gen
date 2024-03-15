@@ -77,23 +77,6 @@ class BalancedCatanBoardGenerator(toga.App):
 
     def get_tiles(self):
 
-        # 4 players:
-        #             -2,2     -1,2     0,2
-        #       -2,1     -1,1       0,1      1,0
-        # -2,0      -1,0        0,0      1,0      2,0
-        #      -1,-1     0,-1       1,-1    2,-1
-        #           0,-2      1,-2      2,-2
-
-        # 6 players:
-        #                  -3,3     -2,3     -1,3
-        #             -3,2     -2,2     -1,2     0,2
-        #      -3,1       -2,1     -1,1       0,1      1,0
-        # -3,0      -2,0      -1,0       0,0      1,0      2,0
-        #      -2,-1     -1,-1      0,-1     1,-1    2,-1
-        #           -1,-2      0,-2      1,-2      2,-2
-        #                 0,-3     1,-3       2,-3
-
-
         if not self.options["5/6 players"]:
             self.tile_centers = [(i, j) for j in range(-2, 3) for i in range(max(-2 - j, -2), min(3 - j, 3)) ]
         else:
@@ -131,7 +114,8 @@ class BalancedCatanBoardGenerator(toga.App):
         pass
 
     def generate_pressed(self, widget):
-        self.main_window.info_dialog("Hey!", f"New board generation requested")
+        #self.main_window.info_dialog("Hey!", f"New board generation requested")
+        self.board_canvas.context.clear()
         self.get_tiles()
         self.draw()
         # self.main_window.info_dialog("Hey!", f"window dimensions: {self.main_window.size}")
