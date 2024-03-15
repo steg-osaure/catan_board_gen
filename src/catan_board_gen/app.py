@@ -53,6 +53,8 @@ class BalancedCatanBoardGenerator(toga.App):
         # put box in window
         self.main_window.content = main_box
 
+        self.width, self.height = self.main_window.size
+
         # options, for the logic:
         self.options = {
                 "5/6 players": False,
@@ -63,23 +65,47 @@ class BalancedCatanBoardGenerator(toga.App):
                 }
 
         #print(self.main_window.size)
-        width, height = self.main_window.size
 
-        #self.tile_centers = np.array([(i, j) for j in np.arange(-2, 3)for i in np.arange(max(-2 - j, -2), min(3 - j, 3)) ], dtype=int)
-        self.tile_centers = [(i, j) for j in range(-2, 3) for i in range(max(-2 - j, -2), min(3 - j, 3)) ]
-        #print(self.tile_centers)
-        self.tile_cart = [
-                (
-                    width // 2 + 60 * (i[0] + math.cos(math.pi / 3) * i[1]),
-                    width // 2 + 60 * math.sin(math.pi / 3) * i[1]
-                ) for i in self.tile_centers]
-        print(self.tile_cart)
+        self.get_tiles()
+
 
         # draw canvas
         self.draw()
 
         # show the window
         self.main_window.show()
+
+    def get_tiles(self):
+
+        # 4 players:
+        #             -2,2     -1,2     0,2
+        #       -2,1     -1,1       0,1      1,0
+        # -2,0      -1,0        0,0      1,0      2,0
+        #      -1,-1     0,-1       1,-1    2,-1
+        #           0,-2      1,-2      2,-2
+
+        # 6 players:
+        #                  -3,3     -2,3     -1,3
+        #             -3,2     -2,2     -1,2     0,2
+        #      -3,1       -2,1     -1,1       0,1      1,0
+        # -3,0      -2,0      -1,0       0,0      1,0      2,0
+        #      -2,-1     -1,-1      0,-1     1,-1    2,-1
+        #           -1,-2      0,-2      1,-2      2,-2
+        #                 0,-3     1,-3       2,-3
+
+
+        if not self.options["5/6 players"]:
+            self.tile_centers = [(i, j) for j in range(-2, 3) for i in range(max(-2 - j, -2), min(3 - j, 3)) ]
+        else:
+            self.tile_centers = [(i, j) for j in range(-3, 4) for i in range(max(-3 - j, -3), min(3 - j, 3)) ]
+
+        offset = 0 * ~self.options["5/6 players"] + 30 * math.cos(math.pi / 6) * self.options["5/6 players"] 
+        self.tile_cart = [
+                (
+                    offset + self.width // 2 + 60 * (i[0] + math.cos(math.pi / 3) * i[1]),
+                    self.width // 2 + 60 * math.sin(math.pi / 3) * i[1]
+                ) for i in self.tile_centers]
+
 
     def draw(self):
 
@@ -106,10 +132,12 @@ class BalancedCatanBoardGenerator(toga.App):
 
     def generate_pressed(self, widget):
         self.main_window.info_dialog("Hey!", f"New board generation requested")
+        self.get_tiles()
+        self.draw()
         # self.main_window.info_dialog("Hey!", f"window dimensions: {self.main_window.size}")
 
     def more_players(self, widget):
-        pass
+        self.options["5/6 players"] = widget.value
 
     def prevent_clusters(self, widget):
         print(f"Prevent clusters? {widget.value}")
