@@ -3,6 +3,7 @@ Generate random, balanced boards for the board game Catan
 """
 
 import math
+
 # import numpy as np
 
 import toga
@@ -27,10 +28,10 @@ class BalancedCatanBoardGenerator(toga.App):
         # debug on linux: pass same size as for android (my FP3 phone),
         # debug on linux: make un-resizable
         self.main_window = toga.MainWindow(
-                title=self.formal_name,
-                size=(450, 772),
-                resizable = False,
-                )
+            title=self.formal_name,
+            # size=(450, 772),
+            resizable=False,
+        )
 
         # initiate all the widgets
         self.create_widgets()
@@ -53,69 +54,81 @@ class BalancedCatanBoardGenerator(toga.App):
         # put box in window
         self.main_window.content = main_box
 
-        self.width, self.height = self.main_window.size
+        # self.width, self.height = self.board_canvas.style.width
+        #        self.width = self.board_canvas.style.width
+        #        print(self.width)
+
+        # debug:
+        # self.width, self.height = 450, 772
 
         # options, for the logic:
         self.options = {
-                "5/6 players": False,
-                "Ressource clusters": True,
-                "Balanced ports": True,
-                "Number clusters": True,
-                "Number repeats": True,
-                }
-
-        #print(self.main_window.size)
-
-        self.get_tiles()
-
-
-        # draw canvas
-        self.draw()
+            "5/6 players": False,
+            "Ressource clusters": True,
+            "Balanced ports": True,
+            "Number clusters": True,
+            "Number repeats": True,
+        }
 
         # show the window
         self.main_window.show()
 
+    #        self.get_tiles()
+    #        # draw canvas
+    #        self.draw()
+
     def get_tiles(self):
 
         if not self.options["5/6 players"]:
-            self.tile_centers = [(i, j) for j in range(-2, 3) for i in range(max(-2 - j, -2), min(3 - j, 3)) ]
+            self.tile_centers = [
+                (i, j)
+                for j in range(-2, 3)
+                for i in range(max(-2 - j, -2), min(3 - j, 3))
+            ]
         else:
-            self.tile_centers = [(i, j) for j in range(-3, 4) for i in range(max(-3 - j, -3), min(3 - j, 3)) ]
+            self.tile_centers = [
+                (i, j)
+                for j in range(-3, 4)
+                for i in range(max(-3 - j, -3), min(3 - j, 3))
+            ]
 
-        offset = 0 * ~self.options["5/6 players"] + 30 * math.cos(math.pi / 6) * self.options["5/6 players"] 
+        offset = (
+            0 * ~self.options["5/6 players"]
+            + 30 * math.cos(math.pi / 6) * self.options["5/6 players"]
+        )
         self.tile_cart = [
-                (
-                    offset + self.width // 2 + 60 * (i[0] + math.cos(math.pi / 3) * i[1]),
-                    self.width // 2 + 60 * math.sin(math.pi / 3) * i[1]
-                ) for i in self.tile_centers]
-
+            (
+                offset + self.width // 2 + 60 * (i[0] + math.cos(math.pi / 3) * i[1]),
+                self.width // 2 + 60 * math.sin(math.pi / 3) * i[1],
+            )
+            for i in self.tile_centers
+        ]
 
     def draw(self):
-
         for i in self.tile_cart:
             self.draw_hex(i[0], i[1])
 
-    def draw_hex(self, x, y, edge_size = 30, filled = False, fill_color = "BLANK"):
+    def draw_hex(self, x, y, edge_size=30, filled=False, fill_color="BLANK"):
         e = edge_size
-        a = math.pi / 6.
+        a = math.pi / 6.0
 
-        with self.board_canvas.Stroke(line_width = 2.0) as stroker:
+        with self.board_canvas.Stroke(line_width=2.0) as stroker:
             with stroker.ClosedPath(x - e * math.cos(a), y - e * math.sin(a)) as path:
                 path.line_to(x - e * math.cos(a), y + e * math.sin(a))
-                path.line_to(x, y + e )
+                path.line_to(x, y + e)
                 path.line_to(x + e * math.cos(a), y + e * math.sin(a))
                 path.line_to(x + e * math.cos(a), y - e * math.sin(a))
                 path.line_to(x, y - e)
 
-
-
     def on_press(self, widget, x, y, **kwargs):
-        # self.main_window.info_dialog("Hey!", f"Pressed at ({x}, {y})")
+        #        self.width, self.height = self.main_window.size
+        #        self.main_window.info_dialog("Hey!", f"window size: {self.width}, {self.height}")
         pass
 
     def generate_pressed(self, widget):
-        #self.main_window.info_dialog("Hey!", f"New board generation requested")
+        # self.main_window.info_dialog("Hey!", f"New board generation requested")
         self.board_canvas.context.clear()
+        self.width, self.height = self.main_window.size
         self.get_tiles()
         self.draw()
         # self.main_window.info_dialog("Hey!", f"window dimensions: {self.main_window.size}")
