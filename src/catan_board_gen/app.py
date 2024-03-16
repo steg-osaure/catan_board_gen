@@ -24,12 +24,8 @@ class BalancedCatanBoardGenerator(toga.App):
 
         #####  Initiate the window and its content  #####
 
-        # debug on linux: pass same size as for android (my FP3 phone),
-        # debug on linux: make un-resizable
         self.main_window = toga.MainWindow(
             title=self.formal_name,
-            size=(450, 772),
-            # resizable=False,
         )
 
         # options, for the logic:
@@ -40,6 +36,8 @@ class BalancedCatanBoardGenerator(toga.App):
             "Number_clusters": True,
             "Number_repeats": True,
         }
+
+        self.prompted_warning = False
 
         # initiate all the widgets
         self.create_widgets()
@@ -62,7 +60,6 @@ class BalancedCatanBoardGenerator(toga.App):
         # put box in window
         self.main_window.content = main_box
 
-
         # show the window
         self.main_window.show()
 
@@ -77,30 +74,33 @@ class BalancedCatanBoardGenerator(toga.App):
         ]
 
         # list of ressources
-        self.ressource_list = ['brick', 'wood', 'sheep', 'wheat', 'stone', 'desert']
+        self.ressource_list = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
 
         # the deck of ressources to use
-        self.deck = (3 + 2 * offset) * ['brick'] \
-                  + (4 + 2 * offset) * ['wood'] \
-                  + (4 + 2 * offset) * ['sheep'] \
-                  + (4 + 2 * offset) * ['wheat'] \
-                  + (3 + 2 * offset) * ['stone'] \
-                  + (1 + 1 * offset) * ['desert']
-                  
+        self.deck = (
+            (3 + 2 * offset) * ["brick"]
+            + (4 + 2 * offset) * ["wood"]
+            + (4 + 2 * offset) * ["sheep"]
+            + (4 + 2 * offset) * ["wheat"]
+            + (3 + 2 * offset) * ["stone"]
+            + (1 + 1 * offset) * ["desert"]
+        )
 
         # the deck of numbers to use
-        self.numbers_deck = [2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2  + offset)
+        self.numbers_deck = [2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (
+            2 + offset
+        )
 
-        #self.numbers_deck = [n for n in self.numbers_deck if n != 7]
         # Assing the desert tiles with number 7
-        desert_idx = where(self.deck, 'desert')
+        desert_idx = where(self.deck, "desert")
         for i in desert_idx[::-1]:
             self.numbers_deck.insert(i, 7)
 
         # Generate the tiles
-        self.tiles = [Tile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
-
-
+        self.tiles = [
+            Tile(c[0], c[1], t, n)
+            for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)
+        ]
 
     def convert_coord_to_screen(self):
 
@@ -135,32 +135,45 @@ class BalancedCatanBoardGenerator(toga.App):
         self.convert_coord_to_screen()
         for i, t in enumerate(self.tile_cart):
             color = {
-                'brick': 'coral',
-                'wood': 'forestgreen',
-                'sheep': 'palegreen',
-                'wheat': 'gold',
-                'stone': 'slategrey',
-                'desert': 'peachpuff',
+                "brick": "coral",
+                "wood": "forestgreen",
+                "sheep": "palegreen",
+                "wheat": "gold",
+                "stone": "slategrey",
+                "desert": "peachpuff",
             }[self.deck[i]]
-            self.draw_hex(t[0], t[1], self.numbers_deck[i], self.tile_size, fill_color = color,)
+            self.draw_hex(
+                t[0],
+                t[1],
+                self.numbers_deck[i],
+                self.tile_size,
+                fill_color=color,
+            )
 
     def draw_hex(self, x, y, num, edge_size=30, fill_color="BLANK"):
-        font = toga.Font(family=SANS_SERIF, size=edge_size/2)
+        font = toga.Font(family=SANS_SERIF, size=edge_size / 2)
         w, h = self.board_canvas.measure_text(str(num), font)
+
+        # Drawing the actual hexagonal tile
         with self.board_canvas.Stroke(line_width=0.5) as stroker:
             with stroker.Fill(x, y + edge_size, fill_color) as path:
                 for n in range(6):
-                    path.line_to(x + edge_size * math.sin(n * math.pi / 3), y + edge_size * math.cos(n * math.pi / 3))
+                    path.line_to(
+                        x + edge_size * math.sin(n * math.pi / 3),
+                        y + edge_size * math.cos(n * math.pi / 3),
+                    )
 
+        # Drawing the number token
         if num != 7:
             with self.board_canvas.Fill(x, y, color="WHITE") as filler:
-               filler.ellipse(x, y, edge_size / 2, edge_size / 2)
+                filler.ellipse(x, y, edge_size / 2, edge_size / 2)
             with self.board_canvas.Stroke(line_width=2) as stroker:
                 stroker.arc(x, y, edge_size / 2)
             c = "BLACK" * ((num != 6) & (num != 8)) + "RED" * ((num == 6) | (num == 8))
             with self.board_canvas.Fill(x, y, color=c) as text_filler:
-                text_filler.write_text(str(num), x - w /2., y - h / 2., font, Baseline.TOP)
-
+                text_filler.write_text(
+                    str(num), x - w / 2.0, y - h / 2.0, font, Baseline.TOP
+                )
 
     def generate_pressed(self, widget):
         self.get_tiles()
@@ -168,14 +181,8 @@ class BalancedCatanBoardGenerator(toga.App):
         self.draw()
 
     def shuffle_and_check(self):
-        # shuffle ressources
-        # shuffle numbers
-        # check againts rules
-        # re-generate if necessary
 
-        # debug: seed to 0
-        #r.seed(0)
-
+        # Shuffling the tiles until a valid permutation is found
         is_valid = False
         while not is_valid:
             is_valid = True
@@ -184,46 +191,58 @@ class BalancedCatanBoardGenerator(toga.App):
                 t.ressource = res
 
             # Test for cluster ressource, only mask if option is set
-            is_valid = is_valid & ~( ~all(self.check_ressource_clusters()) & self.options["Ressource_clusters"])
+            is_valid = is_valid & ~(
+                ~all(self.check_ressource_clusters())
+                & self.options["Ressource_clusters"]
+            )
 
             # Test for balanced ports:
-            #TODO
+            # TODO
 
-
+        # Shuffling the numbers until a valid permutation is found
         is_valid = False
         while not is_valid:
             is_valid = True
             self.numbers_deck = [n for n in self.numbers_deck if n != 7]
             r.shuffle(self.numbers_deck)
-            desert_idx = where(self.deck, 'desert')
+            desert_idx = where(self.deck, "desert")
             for i in desert_idx:
                 self.numbers_deck.insert(i, 7)
             for t, n in zip(self.tiles, self.numbers_deck):
                 t.number = n
 
             # Test for clusters of numbers
-            is_valid = is_valid & ~( ~all(self.check_number_clusters()) & self.options["Number_clusters"])
+            is_valid = is_valid & ~(
+                ~all(self.check_number_clusters()) & self.options["Number_clusters"]
+            )
 
             # Test for numbers repeating on the same ressource
-            is_valid = is_valid & ~( ~all(self.check_number_repeats()) & self.options["Number_repeats"])
-#            print(is_valid)
-#            break
+            is_valid = is_valid & ~(
+                ~all(self.check_number_repeats()) & self.options["Number_repeats"]
+            )
 
     def ressource_neighbours(self):
         nb_neighbours = [0] * len(self.deck)
         for i, t in enumerate(self.tiles):
             same_ressources_idx = where(self.deck, t.ressource)
-            same_ressources_centers = [self.tiles[i].coords for i in same_ressources_idx]
+            same_ressources_centers = [
+                self.tiles[i].coords for i in same_ressources_idx
+            ]
             neighbours = t.neighbours()
-            # TODO: fix
-            same_type_neighbours = [s for s in same_ressources_centers if s in neighbours]
+            same_type_neighbours = [
+                s for s in same_ressources_centers if s in neighbours
+            ]
             nb_neighbours[i] = len(same_type_neighbours)
-        return(nb_neighbours)
+        return nb_neighbours
 
     def check_ressource_clusters(self):
         nb_neighbours = self.ressource_neighbours()
-        valid = [((r in ['wheat', 'wood', 'sheep']) & (n < 2)) | ((r in ['brick', 'stone', 'desert']) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)]
-        return(valid)
+        valid = [
+            ((r in ["wheat", "wood", "sheep"]) & (n < 2))
+            | ((r in ["brick", "stone", "desert"]) & (n < 1))
+            for (r, n) in zip(self.deck, nb_neighbours)
+        ]
+        return valid
 
     def check_number_clusters(self):
         nb_neighbours = [0] * len(self.deck)
@@ -255,36 +274,23 @@ class BalancedCatanBoardGenerator(toga.App):
 
             valid[idx] = valid[idx] & (len(neighbours_68) == 0)
 
-        return(valid)
+        return valid
 
     def check_number_repeats(self):
-
-#        nb_neighbours = [0] * len(self.deck)
-#        valid = [True] * len(self.deck)
-#        lim = 0 * ~self.options["More_players"] + 1 * self.options["More_players"]
-#        #lim = 0 
-#        for i, t in enumerate(self.tiles):
-
-#            # check that no same number share the same ressource
-#            same_num_idx = where(self.numbers_deck, t.number)
-#            same_num_idx = [j for j in same_num_idx if i != j]
-
-#            same_num_repeat = [j for j in same_num_idx if self.deck[j] == t.ressource]
-#            
-#            valid[i] = valid[i] & (len(same_num_repeat) <= lim)
-#            print(i, t.ressource, same_num_repeat, valid[i])
 
         valid = [True] * len(self.ressource_list[:-1])
 
         # For all ressources (except desert), check that there is no repeat
         # For 5/6 players, at most one repeat
-        for i,r in enumerate(self.ressource_list[:-1]):
+        for i, r in enumerate(self.ressource_list[:-1]):
             ress_idx = where(self.deck, r)
             ress_nums = [self.numbers_deck[j] for j in ress_idx]
             unique_nums = list(set(ress_nums))
             count_nums = [ress_nums.count(e) for e in unique_nums]
 
-            valid[i] = valid[i] & (sum(count_nums) <= len(unique_nums) + 1 * self.options["More_players"])
+            valid[i] = valid[i] & (
+                sum(count_nums) <= len(unique_nums) + 1 * self.options["More_players"]
+            )
 
             # Conditions for 6 and 8
 
@@ -295,54 +301,24 @@ class BalancedCatanBoardGenerator(toga.App):
             if not self.options["More_players"]:
                 valid[i] = valid[i] & (ress_6_count + ress_8_count <= 1)
 
-            else:
-                valid[i] = valid[i] & (ress_6_count + ress_8_count >= 1) & (ress_6_count <= 1) & (ress_8_count <= 1)
             # and at least one, or both (but not twice the same) for 5-6 player boards
-
-#            print(r, ress_6_count, ress_8_count, valid[i])
-
-        return(valid)
-
-
-        """
-        # for 6 and 8:
-
-        #idx_68 = np.where((self.numbers_deck == 6) | (self.numbers_deck == 8))[0]
-        # TODO: fix
-        idx_68 = where(self.numbers_deck, 6) + where(self.numbers_deck, 8)
-
-        # check that ressources have 0/1 (up to 4 players) or 1/2 (5-6 players) 6 or 8
-        ress_68 = [self.deck[i] for i in idx_68]
-        #u, c = np.unique(ress_68, return_counts=True)
-        u = list(set(ress_68))
-        #c = [len(where(ress_68, e)) for e in u]
-        c = [ress_68.count(e) for e in u]
-        # TODO: fix
-        #duplicate_68_ress = u[c > 1]
-        #duplicate_68_idx = idx_68[np.array([r in duplicate_68_ress for r in ress_68])]
-        #valid[duplicate_68_idx] = False
-
-        # check that no 6 and 8 are adjacent
-        for i, idx in enumerate(idx_68):
-            t = self.tiles[idx]
-
-            neighbours = t.neighbours()
-
-            #others_idx = np.delete(idx_68, i)
-            others_idx = idx_68.copy()
-            others_idx.pop(i)
-
-            others = [self.tiles[o] for o in others_idx]
-            others_coords = [o.coords for o in others]
-
-#            l = ~any([any(all([n == o for n in neighbours])) for o in others_coords])
-#            valid[idx] = valid[idx] & l
+            else:
+                valid[i] = (
+                    valid[i]
+                    & (ress_6_count + ress_8_count >= 1)
+                    & (ress_6_count <= 1)
+                    & (ress_8_count <= 1)
+                )
 
         return valid
-        """
 
     def on_option_switch(self, widget):
         self.options[widget.id.replace("_switch", "")] = widget.value
+        if self.options["More_players"] & ~self.prompted_warning:
+            self.prompted_warning = True
+            self.main_window.info_dialog(
+                "Warning", "Board generation may be slow for big boards"
+            )
 
     def show_description(self, widget, **kwargs):
         description_text = {
@@ -396,8 +372,11 @@ class BalancedCatanBoardGenerator(toga.App):
                 text=t,
                 on_change=self.on_option_switch,
                 value=v,
-                id = f"{i}_switch"
-            ) for t, i, v in zip(switches_text, self.options.keys(), self.options.values())
+                id=f"{i}_switch",
+            )
+            for t, i, v in zip(
+                switches_text, self.options.keys(), self.options.values()
+            )
         ]
 
         # Pair the switches and buttons
@@ -418,8 +397,7 @@ class BalancedCatanBoardGenerator(toga.App):
 
         # Put all switches and button in the same box
         self.switch_box = toga.Box(
-            children= self.switch_boxes
-            + [self.generate_button],
+            children=self.switch_boxes + [self.generate_button],
             style=Pack(
                 direction="column",
             ),
@@ -442,39 +420,30 @@ class BalancedCatanBoardGenerator(toga.App):
 class Tile:
     # the possible colors, matching the ressource type
     colors = {
-            'brick': 'coral',
-            'wood': 'forestgreen',
-            'sheep': 'palegreen',
-            'wheat': 'gold',
-            'stone': 'slategrey',
-            'desert': 'peachpuff',
-            }
-
-    # the transformation matrix
-    # u1 = (1, 0)
-    # u2 = (np.cos(np.pi/3), np.sin(np.pi/3))
-#    grid_to_cart = np.array([
-#        [1, np.cos(np.pi/3)],
-#        [0, np.sin(np.pi/3)] ])
+        "brick": "coral",
+        "wood": "forestgreen",
+        "sheep": "palegreen",
+        "wheat": "gold",
+        "stone": "slategrey",
+        "desert": "peachpuff",
+    }
 
     # coordinates of the corners
     # in hex grid coordinates:
     corners = [
-        ( 1/3, 1/3), 
-        (-1/3, 2/3), 
-        (-2/3, 1/3), 
-        (-1/3,-1/3), 
-        ( 1/3,-2/3), 
-        ( 2/3,-1/3),
+        (1 / 3, 1 / 3),
+        (-1 / 3, 2 / 3),
+        (-2 / 3, 1 / 3),
+        (-1 / 3, -1 / 3),
+        (1 / 3, -2 / 3),
+        (2 / 3, -1 / 3),
     ]
-    
 
+    relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
-    relative_neighbours = [
-            (1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)
-            ]
-
-    def __init__(self, x: int = 0, y: int = 0, ressource: str = 'desert', number: int = None):
+    def __init__(
+        self, x: int = 0, y: int = 0, ressource: str = "desert", number: int = None
+    ):
 
         # store x, y (hex coordinates)
         self.x, self.y = x, y
@@ -486,160 +455,13 @@ class Tile:
         # store number
         self.number = number
 
-#    def draw(self, axis):
-#        self.color = self.colors[self.ressource]
-#        # pips (odds of getting the number out of the dice roll, out of 36)
-#        self.pip = min(self.number - 1, 13 - self.number)
-
-#        # get coordinates of corners, transform to cartesian
-#        #corners_cart = np.matmul(self.grid_to_cart, (self.corners + self.coords).transpose())
-
-#        # a hexagon for the tile
-#        #tile_hex = axis.fill(corners_cart[0], corners_cart[1], edgecolor='k', facecolor=self.color)
-
-#        # a circle with number in the middle
-#        if self.number is not None and self.number != 7:
-#            center_cart = np.matmul(self.grid_to_cart, self.coords.transpose())
-#            tile_circ = plt.Circle((center_cart[0], center_cart[1]), 0.18, edgecolor='k', facecolor='white')
-#            axis.add_patch(tile_circ)
-
-#            tile_num = plt.text(center_cart[0], center_cart[1], str(self.number), verticalalignment='center', horizontalalignment='center')
-
     def neighbours(self):
-        return([(i[0] + self.x, i[1] + self.y) for i in self.relative_neighbours])
-
-class Board:
-    tile_centers = [
-            (i, j) for j in range(-2, 3)for i in range(max(-2 - j, -2), min(3 - j, 3)) 
-            ]
-
-    tile_deck = 3 * ['brick'] \
-                    + 4 * ['wood'] \
-                    + 4 * ['sheep'] \
-                    + 4 * ['wheat'] \
-                    + 3 * ['stone'] \
-                    + ['desert']
-
-    ressource_list = ['brick', 'wood', 'sheep', 'wheat', 'stone', 'desert']
-
-    numbers_deck = [2] + [3, 4, 5, 6, 8, 9, 10, 11] * 2 + [12]
-
-    def __init__(self, seed: int = None, ruleset: int = 0):
-
-        # 
-        self.seed = seed
-        self.ruleset = ruleset
-
-        # initialize the seed
-        r.seed(self.seed)
-
-        # generate and shuffle the deck of tiles
-        self.deck = self.tile_deck
-        r.shuffle(self.deck)
-
-        # generate and shuffle the deck of numbers
-        self.nums = self.numbers_deck
-        r.shuffle(self.nums)
-
-        # give the desert the number 7
-        desert_idx = where(self.deck, 'desert')
-        self.nums = self.nums.insert(desert_idx, 7)
-
-
-        # create Tile objects
-        self.tiles = [Tile(c[0], c[1], t, n) for (t, c, n) in zip(self.tile_deck, self.tile_centers, self.nums)]
-
-        while ~all(self.check_valid_ressources()):
-            r.shuffle(self.deck)
-            for t, res in zip(self.tiles, self.deck):
-                t.ressource = res
-
-        while ~all(self.check_valid_number()):
-            self.nums = self.nums[self.nums != 7]
-            r.shuffle(self.nums)
-            desert_idx = where(self.deck, 'desert')
-            self.nums = self.nums.insert(desert_idx, 7)
-            for t, n in zip(self.tiles, self.nums):
-                t.number = n
-
-        # create figure
-        self.fig, self.ax = plt.subplots()
-
-    def ressource_neighbours(self):
-        nb_neighbours = [0] * len(self.deck)
-        for i, t in enumerate(self.tiles):
-            same_ressources_idx = where(self.deck, t.ressource)
-            same_ressources_centers = [self.tiles[i].coords for i in same_ressources_idx]
-            neighbours = t.neighbours()
-            # TODO: fix
-            same_type_neighbours = neighbours[[any(all(same_ressources_centers == n)) for n in neighbours]]
-            nb_neighbours[i] = len(same_type_neighbours)
-
-        return(nb_neighbours)
-
-    def check_valid_ressources(self):
-        nb_neighbours = self.ressource_neighbours()
-        valid = [((r in ['wheat', 'wood', 'sheep']) & (n < 2)) | ((r in ['brick', 'stone', 'desert']) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)]
-        return(valid)
-
-    def check_valid_number(self):
-        nb_neighbours = [0] * len(self.deck)
-        valid = [True] * len(self.deck)
-        for i, t in enumerate(self.tiles):
-
-            # check that no same numbers are touching
-            same_num_idx = where(self.nums, t.number)[0]
-            same_num_centers = [self.tiles[i].coords for i in same_num_idx]
-
-            neighbours = t.neighbours()
-            # TODO: fix
-            same_num_neighbours = neighbours[[any(all(same_num_centers == n)) for n in neighbours]]
-            valid[i] = valid[i] & (len(same_num_neighbours) == 0)
-
-            # check that no same number share the same ressource
-
-            same_num_idx = same_num_idx[same_num_idx != i]
-            valid[i] = valid[i] & ~(t.ressource in [r for r in self.deck[same_num_idx]])
-            #print(i, t.ressource, same_num_idx, valid[i])
-
-        # for 6 and 8:
-
-        #idx_68 = np.where((self.nums == 6) | (self.nums == 8))[0]
-        # TODO: fix
-        idx_68 = where(self.nums, 6) + where(self.nums, 8)
-
-        # check that ressources have 0/1 (up to 4 players) or 1/2 (5-6 players) 6 or 8
-        ress_68 = self.deck[idx_68]
-        #u, c = np.unique(ress_68, return_counts=True)
-        u = list(set(ress_68))
-        #c = [len(where(ress_68, e)) for e in u]
-        c = [l.count(e) for e in u]
-        # TODO: fix
-        #duplicate_68_ress = u[c > 1]
-        #duplicate_68_idx = idx_68[np.array([r in duplicate_68_ress for r in ress_68])]
-        #valid[duplicate_68_idx] = False
-
-        # check that no 6 and 8 are adjacent
-        for i, idx in enumerate(idx_68):
-            t = self.tiles[idx]
-
-            neighbours = t.neighbours()
-
-            #others_idx = np.delete(idx_68, i)
-            others_idx = idx_68.copy()
-            others_idx.pop(i)
-
-            others = [self.tiles[o] for o in others_idx]
-            others_coords = [o.coords for o in others]
-
-            l = ~any([any(all([n == o for n in neighbours])) for o in others_coords])
-            valid[idx] = valid[idx] & l
-
-        return valid
+        return [(i[0] + self.x, i[1] + self.y) for i in self.relative_neighbours]
 
 
 def where(l, element):
-    return( [i for i in range(len(l)) if l[i] == element])
+    return [i for i in range(len(l)) if l[i] == element]
+
 
 def main():
     return BalancedCatanBoardGenerator()
