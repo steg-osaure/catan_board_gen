@@ -135,21 +135,13 @@ class BalancedCatanBoardGenerator(toga.App):
             self.draw_hex(t[0], t[1], self.tile_size, fill_color = color)
 
     def draw_hex(self, x, y, edge_size=30, fill_color="BLANK"):
-        e = edge_size
-        a = math.pi / 6.0
-
         with self.board_canvas.Stroke(line_width=0.5) as stroker:
-            #with stroker.ClosedPath(x - e * math.cos(a), y - e * math.sin(a)) as path:
-            with stroker.Fill(x - e * math.cos(a), y - e * math.sin(a), fill_color) as path:
-                path.line_to(x - e * math.cos(a), y + e * math.sin(a))
-                path.line_to(x, y + e)
-                path.line_to(x + e * math.cos(a), y + e * math.sin(a))
-                path.line_to(x + e * math.cos(a), y - e * math.sin(a))
-                path.line_to(x, y - e)
+            with stroker.Fill(x, y + edge_size, fill_color) as path:
+                for n in range(6):
+                    path.line_to(x + edge_size * math.sin(n * math.pi / 3), y + edge_size * math.cos(n * math.pi / 3))
 
     def generate_pressed(self, widget):
         self.get_tiles()
-        # self.main_window.info_dialog("test", str(self.deck + self.numbers_deck))
         self.shuffle_and_check()
         self.draw()
 
