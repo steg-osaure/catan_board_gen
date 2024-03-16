@@ -30,7 +30,7 @@ class BalancedCatanBoardGenerator(toga.App):
         self.main_window = toga.MainWindow(
             title=self.formal_name,
             # size=(450, 772),
-            resizable=False,
+            # resizable=False,
         )
 
         # initiate all the widgets
@@ -40,10 +40,11 @@ class BalancedCatanBoardGenerator(toga.App):
         main_box = toga.Box(
             children=[
                 self.board_canvas,
-                self.switch_box,
+                self.switch_scroll,
             ],
             style=Pack(
                 direction="column",
+                alignment="bottom",
                 padding_top=5,
                 padding_right=5,
                 padding_bottom=5,
@@ -55,8 +56,8 @@ class BalancedCatanBoardGenerator(toga.App):
         self.main_window.content = main_box
 
         # self.width, self.height = self.board_canvas.style.width
-        #        self.width = self.board_canvas.style.width
-        #        print(self.width)
+        # self.width = self.board_canvas.style.width
+        # print(self.width)
 
         # debug:
         # self.width, self.height = 450, 772
@@ -92,21 +93,31 @@ class BalancedCatanBoardGenerator(toga.App):
                 for i in range(max(-3 - j, -3), min(3 - j, 3))
             ]
 
+    def convert_coord_to_screen(self):
+
+        self.tile_size = max(self.min_size - 15, 2) // (
+            10 + 2 * self.options["5/6 players"]
+        )
+
         offset = (
             0 * ~self.options["5/6 players"]
-            + 30 * math.cos(math.pi / 6) * self.options["5/6 players"]
+            + self.tile_size * math.cos(math.pi / 6) * self.options["5/6 players"]
         )
         self.tile_cart = [
             (
-                offset + self.width // 2 + 60 * (i[0] + math.cos(math.pi / 3) * i[1]),
-                self.width // 2 + 60 * math.sin(math.pi / 3) * i[1],
+                offset
+                + self.width // 2
+                + 2 * self.tile_size * (i[0] + math.cos(math.pi / 3) * i[1]),
+                self.height * self.canvas_ratio / 2
+                + 2 * self.tile_size * math.sin(math.pi / 3) * i[1],
             )
             for i in self.tile_centers
         ]
 
     def draw(self):
+        self.convert_coord_to_screen()
         for i in self.tile_cart:
-            self.draw_hex(i[0], i[1])
+            self.draw_hex(i[0], i[1], self.tile_size)
 
     def draw_hex(self, x, y, edge_size=30, filled=False, fill_color="BLANK"):
         e = edge_size
@@ -129,6 +140,7 @@ class BalancedCatanBoardGenerator(toga.App):
         # self.main_window.info_dialog("Hey!", f"New board generation requested")
         self.board_canvas.context.clear()
         self.width, self.height = self.main_window.size
+        self.min_size = min(self.width, self.height * self.canvas_ratio)
         self.get_tiles()
         self.draw()
         # self.main_window.info_dialog("Hey!", f"window dimensions: {self.main_window.size}")
@@ -162,10 +174,12 @@ class BalancedCatanBoardGenerator(toga.App):
         self.main_window.info_dialog(title_text, description_text)
 
     def create_widgets(self):
+        self.canvas_prop_size = 1.8
+        self.canvas_ratio = self.canvas_prop_size / (1 + self.canvas_prop_size)
 
         # Canvas to draw the board in
         self.board_canvas = toga.Canvas(
-            style=Pack(flex=1),
+            style=Pack(flex=self.canvas_prop_size),
             on_press=self.on_press,
         )
 
@@ -251,11 +265,26 @@ class BalancedCatanBoardGenerator(toga.App):
             + [self.generate_button],
             style=Pack(
                 direction="column",
+                alignment="bottom",
+                # padding_top=5,
+                # padding_right=5,
+                # padding_bottom=5,
+                # padding_left=5,
+                # flex = 0.5,
+            ),
+        )
+
+        self.switch_scroll = toga.ScrollContainer(
+            content=self.switch_box,
+            style=Pack(
                 padding_top=5,
                 padding_right=5,
                 padding_bottom=5,
                 padding_left=5,
+                flex=1,
+                alignment="bottom",
             ),
+            horizontal=False,
         )
 
 
