@@ -189,9 +189,10 @@ class BalancedCatanBoardGenerator(toga.App):
             # Test for balanced ports:
             #TODO
 
-            # Test for clusters of numbers
 
-        while ~all(self.check_valid_number()):
+        is_valid = False
+        while not is_valid:
+            is_valid = True
             self.numbers_deck = [n for n in self.numbers_deck if n != 7]
             r.shuffle(self.numbers_deck)
             desert_idx = where(self.deck, 'desert')
@@ -199,7 +200,11 @@ class BalancedCatanBoardGenerator(toga.App):
                 self.numbers_deck.insert(i, 7)
             for t, n in zip(self.tiles, self.numbers_deck):
                 t.number = n
-            break
+
+            # Test for clusters of numbers
+            is_valid = is_valid & ~( ~all(self.check_number_clusters()) & self.options["Number_clusters"])
+#            print(is_valid)
+#            break
 
     def ressource_neighbours(self):
         nb_neighbours = [0] * len(self.deck)
@@ -217,20 +222,22 @@ class BalancedCatanBoardGenerator(toga.App):
         valid = [((r in ['wheat', 'wood', 'sheep']) & (n < 2)) | ((r in ['brick', 'stone', 'desert']) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)]
         return(valid)
 
-    def check_valid_number(self):
+    def check_number_clusters(self):
         nb_neighbours = [0] * len(self.deck)
         valid = [True] * len(self.deck)
         for i, t in enumerate(self.tiles):
 
             # check that no same numbers are touching
-            same_num_idx = where(self.numbers_deck, t.number)[0]
-            # same_num_centers = [self.tiles[i].coords for i in same_num_idx]
+            same_num_idx = where(self.numbers_deck, t.number)
+            same_num_centers = [self.tiles[j].coords for j in same_num_idx if i != j]
+            #print(same_num_centers)
 
-
-            # neighbours = t.neighbours()
+            neighbours = t.neighbours()
             # TODO: fix
-            # same_num_neighbours = neighbours[[any(all(same_num_centers == n)) for n in neighbours]]
-            # valid[i] = valid[i] & (len(same_num_neighbours) == 0)
+            same_num_neighbours = [s for s in same_num_centers if s in neighbours]
+#            print(i, t.number, same_num_neighbours)
+            valid[i] = valid[i] & (len(same_num_neighbours) == 0)
+#        print(valid, all(valid))
 
             # check that no same number share the same ressource
 
@@ -238,6 +245,9 @@ class BalancedCatanBoardGenerator(toga.App):
             # valid[i] = valid[i] & ~(t.ressource in [r for r in self.deck[same_num_idx]])
             #print(i, t.ressource, same_num_idx, valid[i])
 
+        return(valid)
+
+        """
         # for 6 and 8:
 
         #idx_68 = np.where((self.numbers_deck == 6) | (self.numbers_deck == 8))[0]
@@ -272,6 +282,7 @@ class BalancedCatanBoardGenerator(toga.App):
 #            valid[idx] = valid[idx] & l
 
         return valid
+        """
 
     def on_option_switch(self, widget):
         self.options[widget.id.replace("_switch", "")] = widget.value
