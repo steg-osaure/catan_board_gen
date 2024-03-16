@@ -203,6 +203,9 @@ class BalancedCatanBoardGenerator(toga.App):
 
             # Test for clusters of numbers
             is_valid = is_valid & ~( ~all(self.check_number_clusters()) & self.options["Number_clusters"])
+
+            # Test for numbers repeating on the same ressource
+            is_valid = is_valid & ~( ~all(self.check_number_repeats()) & self.options["Number_repeats"])
 #            print(is_valid)
 #            break
 
@@ -232,7 +235,6 @@ class BalancedCatanBoardGenerator(toga.App):
             same_num_centers = [self.tiles[j].coords for j in same_num_idx if i != j]
 
             neighbours = t.neighbours()
-            # TODO: fix
             same_num_neighbours = [s for s in same_num_centers if s in neighbours]
             valid[i] = valid[i] & (len(same_num_neighbours) == 0)
 
@@ -257,12 +259,35 @@ class BalancedCatanBoardGenerator(toga.App):
 
     def check_number_repeats(self):
 
-            # check that no same number share the same ressource
+#        nb_neighbours = [0] * len(self.deck)
+#        valid = [True] * len(self.deck)
+#        lim = 0 * ~self.options["More_players"] + 1 * self.options["More_players"]
+#        #lim = 0 
+#        for i, t in enumerate(self.tiles):
 
-            # same_num_idx = same_num_idx[same_num_idx != i]
-            # valid[i] = valid[i] & ~(t.ressource in [r for r in self.deck[same_num_idx]])
-            #print(i, t.ressource, same_num_idx, valid[i])
-        pass
+#            # check that no same number share the same ressource
+#            same_num_idx = where(self.numbers_deck, t.number)
+#            same_num_idx = [j for j in same_num_idx if i != j]
+
+#            same_num_repeat = [j for j in same_num_idx if self.deck[j] == t.ressource]
+#            
+#            valid[i] = valid[i] & (len(same_num_repeat) <= lim)
+#            print(i, t.ressource, same_num_repeat, valid[i])
+
+        valid = [True] * len(self.ressource_list[:-1])
+
+        # For all ressources (except desert), check that there is no repeat
+        # For 5/6 players, at most one repeat
+        for i,r in enumerate(self.ressource_list[:-1]):
+            ress_idx = where(self.deck, r)
+            ress_nums = [self.numbers_deck[j] for j in ress_idx]
+            unique_nums = list(set(ress_nums))
+            count_nums = [ress_nums.count(e) for e in unique_nums]
+
+#            print(r, ress_idx, ress_nums, unique_nums, count_nums)
+            valid[i] = valid[i] & (sum(count_nums) <= len(unique_nums) + 1 * self.options["More_players"])
+
+        return(valid)
 
 
         """
