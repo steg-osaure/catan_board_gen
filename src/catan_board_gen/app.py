@@ -102,11 +102,40 @@ class BalancedCatanBoardGenerator(toga.App):
             for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)
         ]
 
+        # generate the ports
+        # x, y, ressource, orientation (0 if first (counting anti-clockwise) port is top, +1 for each anti-clockwise step)
+        self.ports = [
+                (2, -3, 'sheep', -1),
+                (0, -3, 'None', 0),
+                (-2, -1, 'stone', 1),
+                (-3, 1, 'wheat', 1),
+                (-3, 3, 'None', 2),
+                (-1, 3, 'wood', -3),
+                (1, 2, 'brick', -3),
+                (3, 0, 'None', -2),
+                (3, -2, 'None', -1),
+                ] * (not self.options["More_players"]) \
+            + [
+                (2, -4, 'sheep', -1),
+                (0, -4, 'None', 0),
+                (-3, -1, 'stone', 1),
+                (-4, 1, 'None', 2),
+                (-4, 2, 'wheat', 1),
+                (-4, 4, 'None', 2),
+                (-2, 4, 'wood', -3),
+                (0, 3, 'sheep', -2),
+                (1, 2, 'brick', -3),
+                (3, 0, 'None', -2),
+                (3, -2, 'None', -1),
+                ] * self.options["More_players"]
+
+                
+
     def convert_coord_to_screen(self):
 
         # set size of tile based on window size
         self.tile_size = max(self.min_size - 15, 2) // (
-            10 + 2 * self.options["More_players"]
+            12 + 4 * self.options["More_players"]
         )
 
         # offset, to center the board
@@ -122,9 +151,21 @@ class BalancedCatanBoardGenerator(toga.App):
                 + self.width // 2
                 + 2 * self.tile_size * (i[0] + math.cos(math.pi / 3) * i[1]),
                 self.height * self.canvas_ratio / 2
-                + 2 * self.tile_size * math.sin(math.pi / 3) * i[1],
+                - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * i[1],
             )
             for i in self.tile_centers
+        ]
+
+        self.ports = [
+            (
+                offset
+                + self.width // 2
+                + 2 * self.tile_size * (i[0] + math.cos(math.pi / 3) * i[1]),
+                self.height * self.canvas_ratio / 2
+                - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * i[1],
+                i[2], i[3]
+            )
+            for i in self.ports
         ]
 
     def draw(self):
@@ -150,15 +191,19 @@ class BalancedCatanBoardGenerator(toga.App):
                 fill_color=color,
             )
 
+        for p in self.ports:
+            self.draw_port(p)
+
+
     def draw_hex(self, x, y, num, edge_size=30, fill_color="BLANK"):
         font = toga.Font(family=SANS_SERIF, size=edge_size / 2)
         w, h = self.board_canvas.measure_text(str(num), font)
 
         # Drawing the actual hexagonal tile
-        with self.board_canvas.Stroke(line_width=0.5) as stroker:
-            with stroker.Fill(x, y + edge_size, fill_color) as path:
+        with self.board_canvas.Stroke(line_width=2, color="black") as stroker:
+            with stroker.Fill(x, y + edge_size, fill_color) as filler:
                 for n in range(6):
-                    path.line_to(
+                    filler.line_to(
                         x + edge_size * math.sin(n * math.pi / 3),
                         y + edge_size * math.cos(n * math.pi / 3),
                     )
@@ -174,6 +219,48 @@ class BalancedCatanBoardGenerator(toga.App):
                 text_filler.write_text(
                     str(num), x - w / 2.0, y - h / 2.0, font, Baseline.TOP
                 )
+
+    def draw_port(self, port):
+        x, y, t, o = port
+        print(x, y, t, o)
+
+
+        with self.board_canvas.Stroke(line_width=2) as stroker:
+                stroker.arc(x, y, self.tile_size / 2)
+
+        c = {
+            "brick": "coral",
+            "wood": "forestgreen",
+            "sheep": "palegreen",
+            "wheat": "gold",
+            "stone": "slategrey",
+            "None": "white",
+        }[t]
+
+        with self.board_canvas.Stroke(x, y, line_width = 2) as stroker:
+            stroker.line_to(
+                    x + self.tile_size * math.sin(o * math.pi / 3),
+                    y + self.tile_size * math.cos(o * math.pi / 3)
+                    )
+            stroker.move_to(x, y)
+            stroker.line_to(
+                    x + self.tile_size * math.sin((o + 1) * math.pi / 3),
+                    y + self.tile_size * math.cos((o + 1) * math.pi / 3)
+                    )
+        with self.board_canvas.Fill(x, y, color=c) as filler:
+            filler.ellipse(x, y, self.tile_size / 2, self.tile_size / 2)
+
+
+
+        if t == "None":
+            font = toga.Font(family=SANS_SERIF, size=self.tile_size / 3)
+            w, h = self.board_canvas.measure_text("3:1", font)
+
+            with self.board_canvas.Fill(x, y, color="black") as text_filler:
+                text_filler.write_text(
+                    "3:1", x - w / 2.0, y - h / 2.0, font, Baseline.TOP
+                )
+
 
     def generate_pressed(self, widget):
         self.get_tiles()
@@ -197,7 +284,11 @@ class BalancedCatanBoardGenerator(toga.App):
             )
 
             # Test for balanced ports:
-            # TODO
+            is_valid = is_valid & ~(
+                ~all(self.check_ports())
+                & self.options["Balanced_ports"]
+            )
+
 
         # Shuffling the numbers until a valid permutation is found
         is_valid = False
@@ -243,6 +334,10 @@ class BalancedCatanBoardGenerator(toga.App):
             for (r, n) in zip(self.deck, nb_neighbours)
         ]
         return valid
+
+    def check_ports(self):
+        return([True])
+
 
     def check_number_clusters(self):
         nb_neighbours = [0] * len(self.deck)
