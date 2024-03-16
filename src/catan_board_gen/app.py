@@ -230,22 +230,40 @@ class BalancedCatanBoardGenerator(toga.App):
             # check that no same numbers are touching
             same_num_idx = where(self.numbers_deck, t.number)
             same_num_centers = [self.tiles[j].coords for j in same_num_idx if i != j]
-            #print(same_num_centers)
 
             neighbours = t.neighbours()
             # TODO: fix
             same_num_neighbours = [s for s in same_num_centers if s in neighbours]
-#            print(i, t.number, same_num_neighbours)
             valid[i] = valid[i] & (len(same_num_neighbours) == 0)
-#        print(valid, all(valid))
+
+        idx_68 = where(self.numbers_deck, 6) + where(self.numbers_deck, 8)
+
+        # check that no 6 and 8 are adjacent
+        for i, idx in enumerate(idx_68):
+            t = self.tiles[idx]
+
+            neighbours = t.neighbours()
+
+            others_idx = [j for j in idx_68 if i != j]
+
+            others = [self.tiles[o] for o in others_idx]
+            others_coords = [o.coords for o in others]
+
+            neighbours_68 = [s for s in others_coords if s in neighbours]
+
+            valid[idx] = valid[idx] & (len(neighbours_68) == 0)
+
+        return(valid)
+
+    def check_number_repeats(self):
 
             # check that no same number share the same ressource
 
             # same_num_idx = same_num_idx[same_num_idx != i]
             # valid[i] = valid[i] & ~(t.ressource in [r for r in self.deck[same_num_idx]])
             #print(i, t.ressource, same_num_idx, valid[i])
+        pass
 
-        return(valid)
 
         """
         # for 6 and 8:
