@@ -28,7 +28,7 @@ class BalancedCatanBoardGenerator(toga.App):
         # debug on linux: make un-resizable
         self.main_window = toga.MainWindow(
             title=self.formal_name,
-            # size=(450, 772),
+            size=(450, 772),
             # resizable=False,
         )
 
@@ -67,18 +67,30 @@ class BalancedCatanBoardGenerator(toga.App):
         self.main_window.show()
 
     def get_tiles(self):
-        if not self.options["More_players"]:
-            self.tile_centers = [
-                (i, j)
-                for j in range(-2, 3)
-                for i in range(max(-2 - j, -2), min(3 - j, 3))
-            ]
-        else:
-            self.tile_centers = [
-                (i, j)
-                for j in range(-3, 4)
-                for i in range(max(-3 - j, -3), min(3 - j, 3))
-            ]
+        offset = 0 + 1 * self.options["More_players"]
+
+        # generate the list of used tiles coordinates
+        self.tile_centers = [
+            (i, j)
+            for j in range(-2 - offset, 3 + offset)
+            for i in range(max(-2 - j - offset, -2 - offset), min(3 - j, 3))
+        ]
+
+        # list of ressources
+        self.ressource_list = ['brick', 'wood', 'sheep', 'wheat', 'stone', 'desert']
+
+        # the deck of ressources to use
+        self.deck = (3 + 2 * offset) * ['brick'] \
+                  + (4 + 2 * offset) * ['wood'] \
+                  + (4 + 2 * offset) * ['sheep'] \
+                  + (4 + 2 * offset) * ['wheat'] \
+                  + (3 + 2 * offset) * ['stone'] \
+                  + (1 + 1 * offset) * ['desert']
+                  
+
+        # the deck of numbers to use
+        self.numbers_deck = [0, 2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2  + offset)
+
 
     def convert_coord_to_screen(self):
 
@@ -111,15 +123,24 @@ class BalancedCatanBoardGenerator(toga.App):
         self.min_size = min(self.width, self.height * self.canvas_ratio)
 
         self.convert_coord_to_screen()
-        for i in self.tile_cart:
-            self.draw_hex(i[0], i[1], self.tile_size)
+        for i, t in enumerate(self.tile_cart):
+            color = {
+                'brick': 'coral',
+                'wood': 'forestgreen',
+                'sheep': 'palegreen',
+                'wheat': 'gold',
+                'stone': 'slategrey',
+                'desert': 'peachpuff',
+            }[self.deck[i]]
+            self.draw_hex(t[0], t[1], self.tile_size, fill_color = color)
 
-    def draw_hex(self, x, y, edge_size=30, filled=False, fill_color="BLANK"):
+    def draw_hex(self, x, y, edge_size=30, fill_color="BLANK"):
         e = edge_size
         a = math.pi / 6.0
 
-        with self.board_canvas.Stroke(line_width=2.0) as stroker:
-            with stroker.ClosedPath(x - e * math.cos(a), y - e * math.sin(a)) as path:
+        with self.board_canvas.Stroke(line_width=0.5) as stroker:
+            #with stroker.ClosedPath(x - e * math.cos(a), y - e * math.sin(a)) as path:
+            with stroker.Fill(x - e * math.cos(a), y - e * math.sin(a), fill_color) as path:
                 path.line_to(x - e * math.cos(a), y + e * math.sin(a))
                 path.line_to(x, y + e)
                 path.line_to(x + e * math.cos(a), y + e * math.sin(a))
@@ -128,7 +149,16 @@ class BalancedCatanBoardGenerator(toga.App):
 
     def generate_pressed(self, widget):
         self.get_tiles()
+        # self.main_window.info_dialog("test", str(self.deck + self.numbers_deck))
+        self.shuffle_and_check()
         self.draw()
+
+    def shuffle_and_check(self):
+        # shuffle ressources
+        # shuffle numbers
+        # check againts rules
+        # re-generate if necessary
+        pass
 
     def on_option_switch(self, widget):
         self.options[widget.id.replace("_switch", "")] = widget.value
@@ -426,16 +456,6 @@ class Board:
 
         return valid
 
-#    def draw(self):
-#        for t in self.tiles:
-#            t.draw(self.ax)
-
-#    def show(self):
-#        self.ax.set_xlim(-3, 3)
-#        self.ax.set_ylim(-3, 3)
-#        self.ax.set_aspect('equal')
-#        self.ax.axis('off')
-#        plt.show()
 
 def where(l, element):
     return( [i for i in range(len(l)) if l[i] == element])
