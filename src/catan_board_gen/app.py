@@ -142,13 +142,25 @@ class BalancedCatanBoardGenerator(toga.App):
                 'stone': 'slategrey',
                 'desert': 'peachpuff',
             }[self.deck[i]]
-            self.draw_hex(t[0], t[1], self.tile_size, fill_color = color)
+            self.draw_hex(t[0], t[1], self.numbers_deck[i], self.tile_size, fill_color = color,)
 
-    def draw_hex(self, x, y, edge_size=30, fill_color="BLANK"):
+    def draw_hex(self, x, y, num, edge_size=30, fill_color="BLANK"):
+        font = toga.Font(family=SANS_SERIF, size=edge_size/2)
+        w, h = self.board_canvas.measure_text(str(num), font)
         with self.board_canvas.Stroke(line_width=0.5) as stroker:
             with stroker.Fill(x, y + edge_size, fill_color) as path:
                 for n in range(6):
                     path.line_to(x + edge_size * math.sin(n * math.pi / 3), y + edge_size * math.cos(n * math.pi / 3))
+
+        if num != 7:
+            with self.board_canvas.Fill(x, y, color="WHITE") as filler:
+               filler.ellipse(x, y, edge_size / 2, edge_size / 2)
+            with self.board_canvas.Stroke(line_width=2) as stroker:
+                stroker.arc(x, y, edge_size / 2)
+            c = "BLACK" * ((num != 6) & (num != 8)) + "RED" * ((num == 6) | (num == 8))
+            with self.board_canvas.Fill(x, y, color=c) as text_filler:
+                text_filler.write_text(str(num), x - w /2., y - h / 2., font, Baseline.TOP)
+
 
     def generate_pressed(self, widget):
         self.get_tiles()
@@ -165,7 +177,6 @@ class BalancedCatanBoardGenerator(toga.App):
         #r.seed(0)
 
         is_valid = False
-        #while ~all(self.check_valid_ressources()):
         while not is_valid:
             is_valid = True
             r.shuffle(self.deck)
@@ -174,6 +185,11 @@ class BalancedCatanBoardGenerator(toga.App):
 
             # Test for cluster ressource, only mask if option is set
             is_valid = is_valid & ~( ~all(self.check_ressource_clusters()) & self.options["Ressource_clusters"])
+
+            # Test for balanced ports:
+            #TODO
+
+            # Test for clusters of numbers
 
         while ~all(self.check_valid_number()):
             self.numbers_deck = [n for n in self.numbers_deck if n != 7]
