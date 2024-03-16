@@ -89,7 +89,17 @@ class BalancedCatanBoardGenerator(toga.App):
                   
 
         # the deck of numbers to use
-        self.numbers_deck = [0, 2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2  + offset)
+        self.numbers_deck = [2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2  + offset)
+
+        #self.numbers_deck = [n for n in self.numbers_deck if n != 7]
+        # Assing the desert tiles with number 7
+        desert_idx = where(self.deck, 'desert')
+        for i in desert_idx[::-1]:
+            self.numbers_deck.insert(i, 7)
+
+        # Generate the tiles
+        self.tiles = [Tile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
+
 
 
     def convert_coord_to_screen(self):
@@ -150,7 +160,99 @@ class BalancedCatanBoardGenerator(toga.App):
         # shuffle numbers
         # check againts rules
         # re-generate if necessary
-        pass
+
+        # debug: seed to 0
+        #r.seed(0)
+
+        while ~all(self.check_valid_ressources()):
+            r.shuffle(self.deck)
+            for t, res in zip(self.tiles, self.deck):
+                t.ressource = res
+            break
+
+        while ~all(self.check_valid_number()):
+            self.numbers_deck = [n for n in self.numbers_deck if n != 7]
+            r.shuffle(self.numbers_deck)
+            desert_idx = where(self.deck, 'desert')
+            for i in desert_idx:
+                self.numbers_deck.insert(i, 7)
+            for t, n in zip(self.tiles, self.numbers_deck):
+                t.number = n
+            break
+
+    def ressource_neighbours(self):
+        nb_neighbours = [0] * len(self.deck)
+        for i, t in enumerate(self.tiles):
+            same_ressources_idx = where(self.deck, t.ressource)
+            same_ressources_centers = [self.tiles[i].coords for i in same_ressources_idx]
+            neighbours = t.neighbours()
+            # TODO: fix
+            #print(neighbours)
+            #same_type_neighbours = neighbours[[any(all(same_ressources_centers == n)) for n in neighbours]]
+            #nb_neighbours[i] = len(same_type_neighbours)
+
+        return(nb_neighbours)
+
+    def check_valid_ressources(self):
+        nb_neighbours = self.ressource_neighbours()
+        valid = [((r in ['wheat', 'wood', 'sheep']) & (n < 2)) | ((r in ['brick', 'stone', 'desert']) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)]
+        return(valid)
+
+    def check_valid_number(self):
+        nb_neighbours = [0] * len(self.deck)
+        valid = [True] * len(self.deck)
+        for i, t in enumerate(self.tiles):
+
+            # check that no same numbers are touching
+            same_num_idx = where(self.numbers_deck, t.number)[0]
+            # same_num_centers = [self.tiles[i].coords for i in same_num_idx]
+
+
+            # neighbours = t.neighbours()
+            # TODO: fix
+            # same_num_neighbours = neighbours[[any(all(same_num_centers == n)) for n in neighbours]]
+            # valid[i] = valid[i] & (len(same_num_neighbours) == 0)
+
+            # check that no same number share the same ressource
+
+            # same_num_idx = same_num_idx[same_num_idx != i]
+            # valid[i] = valid[i] & ~(t.ressource in [r for r in self.deck[same_num_idx]])
+            #print(i, t.ressource, same_num_idx, valid[i])
+
+        # for 6 and 8:
+
+        #idx_68 = np.where((self.numbers_deck == 6) | (self.numbers_deck == 8))[0]
+        # TODO: fix
+        idx_68 = where(self.numbers_deck, 6) + where(self.numbers_deck, 8)
+
+        # check that ressources have 0/1 (up to 4 players) or 1/2 (5-6 players) 6 or 8
+        ress_68 = [self.deck[i] for i in idx_68]
+        #u, c = np.unique(ress_68, return_counts=True)
+        u = list(set(ress_68))
+        #c = [len(where(ress_68, e)) for e in u]
+        c = [ress_68.count(e) for e in u]
+        # TODO: fix
+        #duplicate_68_ress = u[c > 1]
+        #duplicate_68_idx = idx_68[np.array([r in duplicate_68_ress for r in ress_68])]
+        #valid[duplicate_68_idx] = False
+
+        # check that no 6 and 8 are adjacent
+        for i, idx in enumerate(idx_68):
+            t = self.tiles[idx]
+
+            neighbours = t.neighbours()
+
+            #others_idx = np.delete(idx_68, i)
+            others_idx = idx_68.copy()
+            others_idx.pop(i)
+
+            others = [self.tiles[o] for o in others_idx]
+            others_coords = [o.coords for o in others]
+
+#            l = ~any([any(all([n == o for n in neighbours])) for o in others_coords])
+#            valid[idx] = valid[idx] & l
+
+        return valid
 
     def on_option_switch(self, widget):
         self.options[widget.id.replace("_switch", "")] = widget.value
