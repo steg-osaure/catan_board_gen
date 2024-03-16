@@ -164,11 +164,16 @@ class BalancedCatanBoardGenerator(toga.App):
         # debug: seed to 0
         #r.seed(0)
 
-        while ~all(self.check_valid_ressources()):
+        is_valid = False
+        #while ~all(self.check_valid_ressources()):
+        while not is_valid:
+            is_valid = True
             r.shuffle(self.deck)
             for t, res in zip(self.tiles, self.deck):
                 t.ressource = res
-            break
+
+            # Test for cluster ressource, only mask if option is set
+            is_valid = is_valid & ~( ~all(self.check_ressource_clusters()) & self.options["Ressource_clusters"])
 
         while ~all(self.check_valid_number()):
             self.numbers_deck = [n for n in self.numbers_deck if n != 7]
@@ -187,13 +192,11 @@ class BalancedCatanBoardGenerator(toga.App):
             same_ressources_centers = [self.tiles[i].coords for i in same_ressources_idx]
             neighbours = t.neighbours()
             # TODO: fix
-            #print(neighbours)
-            #same_type_neighbours = neighbours[[any(all(same_ressources_centers == n)) for n in neighbours]]
-            #nb_neighbours[i] = len(same_type_neighbours)
-
+            same_type_neighbours = [s for s in same_ressources_centers if s in neighbours]
+            nb_neighbours[i] = len(same_type_neighbours)
         return(nb_neighbours)
 
-    def check_valid_ressources(self):
+    def check_ressource_clusters(self):
         nb_neighbours = self.ressource_neighbours()
         valid = [((r in ['wheat', 'wood', 'sheep']) & (n < 2)) | ((r in ['brick', 'stone', 'desert']) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)]
         return(valid)
