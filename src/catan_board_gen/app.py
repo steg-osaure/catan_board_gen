@@ -284,8 +284,22 @@ class BalancedCatanBoardGenerator(toga.App):
             unique_nums = list(set(ress_nums))
             count_nums = [ress_nums.count(e) for e in unique_nums]
 
-#            print(r, ress_idx, ress_nums, unique_nums, count_nums)
             valid[i] = valid[i] & (sum(count_nums) <= len(unique_nums) + 1 * self.options["More_players"])
+
+            # Conditions for 6 and 8
+
+            ress_6_count = sum([ress_nums.count(e) for e in unique_nums if e == 6])
+            ress_8_count = sum([ress_nums.count(e) for e in unique_nums if e == 8])
+
+            # there can only be at most one of either for 3-4 player boards,
+            if not self.options["More_players"]:
+                valid[i] = valid[i] & (ress_6_count + ress_8_count <= 1)
+
+            else:
+                valid[i] = valid[i] & (ress_6_count + ress_8_count >= 1) & (ress_6_count <= 1) & (ress_8_count <= 1)
+            # and at least one, or both (but not twice the same) for 5-6 player boards
+
+#            print(r, ress_6_count, ress_8_count, valid[i])
 
         return(valid)
 
