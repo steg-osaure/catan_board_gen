@@ -357,14 +357,33 @@ class BalancedCatanBoardGenerator(toga.App):
             r.shuffle(argmin)
             print(argmin)
             idx_to_collapse = num_idx_list[argmin[0]]
+
+            t_col = self.tiles[idx_to_collapse]
             
             # collapse it
-            print("collapsing tile ", idx_to_collapse)
-            self.tiles[idx_to_collapse].num_collapse()
+            #print("collapsing tile ", idx_to_collapse)
+            t_col.num_collapse()
+            n_col = t_col.number
+            print(f"collapsed tile at {t_col.coords} to {n_col}")
 
             # propagate the option decrease
+            if self.options["Number_clusters"]:
+                # remove number from neighbouring tiles' options
+                print(f"neighbouring tiles: {t_col.neighbours()}")
+                non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.num_collapsed)]
+                print(f"non-collapsed neighbouring tiles: {[n.coords for n in non_collapsed_neighbours]}")
+                for n in non_collapsed_neighbours:
+                    n.num_options = [num for num in n.num_options if num != n_col]
+
+                #pass
+
+            if self.options["Number_repeats"]:
+                # remove number from same ressource tiles' options
+                pass
+
 
             nb_iter += 1
+#            input()
 #            if nb_iter >= 10:
 #                break
 
