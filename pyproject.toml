@@ -3,24 +3,19 @@
 project_name = "Catan Board Generator"
 bundle = "com.example"
 version = "0.0.1"
-url = "https://example.com/catan_board_gen"
+url = "https://github.com/steg-osaure/catan_board_gen"
 license = "BSD license"
-author = "Stegosaure"
+author = "Steg Osaure"
 author_email = "stegosaure@tutanota.com"
 
-[tool.briefcase.app.catan_board_gen]
+[tool.briefcase.app.catanboardgen]
 formal_name = "Catan Board Generator"
 description = "Generate random, balanced boards for the board game Catan"
-long_description = """
-This program lets you generate random boards for the board game of Catan.
-Several options are available to make the board more balanced, for instance,
-prevent to many tiles of the same ressource type to be neighbouring each other.
-An option to generate bigger boards for the 5th and 6th player extension is also 
-available.
+long_description = """More details about the app should go here.
 """
-icon = "src/catan_board_gen/resources/catan_board_gen"
+icon = "src/catanboardgen/resources/catanboardgen"
 sources = [
-    "src/catan_board_gen",
+    "src/catanboardgen",
 ]
 test_sources = [
     "tests",
@@ -31,7 +26,7 @@ requires = [
 test_requires = [    "pytest",]
 
 
-[tool.briefcase.app.catan_board_gen.macOS]
+[tool.briefcase.app.catanboardgen.macOS]
 universal_build = true
 requires = [
     "toga-cocoa~=0.4.0",
@@ -39,13 +34,13 @@ requires = [
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux]
+[tool.briefcase.app.catanboardgen.linux]
 requires = [
     "toga-gtk~=0.4.0",
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux.system.debian]
+[tool.briefcase.app.catanboardgen.linux.system.debian]
 system_requires = [
     # Needed to compile pycairo wheel
     "libcairo2-dev",
@@ -64,7 +59,7 @@ system_runtime_requires = [
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux.system.rhel]
+[tool.briefcase.app.catanboardgen.linux.system.rhel]
 system_requires = [
     # Needed to compile pycairo wheel
     "cairo-gobject-devel",
@@ -84,7 +79,7 @@ system_runtime_requires = [
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux.system.suse]
+[tool.briefcase.app.catanboardgen.linux.system.suse]
 system_requires = [
     # Needed to compile pycairo wheel
     "cairo-devel",
@@ -105,7 +100,7 @@ system_runtime_requires = [
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux.system.arch]
+[tool.briefcase.app.catanboardgen.linux.system.arch]
 system_requires = [
     # Needed to compile pycairo wheel
     "cairo",
@@ -133,7 +128,7 @@ system_runtime_requires = [
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux.appimage]
+[tool.briefcase.app.catanboardgen.linux.appimage]
 manylinux = "manylinux_2_28"
 
 system_requires = [
@@ -155,27 +150,27 @@ linuxdeploy_plugins = [
 ]
 
 
-[tool.briefcase.app.catan_board_gen.linux.flatpak]
+[tool.briefcase.app.catanboardgen.linux.flatpak]
 flatpak_runtime = "org.gnome.Platform"
 flatpak_runtime_version = "45"
 flatpak_sdk = "org.gnome.Sdk"
 
 
-[tool.briefcase.app.catan_board_gen.windows]
+[tool.briefcase.app.catanboardgen.windows]
 requires = [
     "toga-winforms~=0.4.0",
 ]
 
 
 # Mobile deployments
-[tool.briefcase.app.catan_board_gen.iOS]
+[tool.briefcase.app.catanboardgen.iOS]
 requires = [
     "toga-iOS~=0.4.0",
     "std-nslog~=1.0.0",
 ]
 
 
-[tool.briefcase.app.catan_board_gen.android]
+[tool.briefcase.app.catanboardgen.android]
 requires = [
     "toga-android~=0.4.0",
 ]
@@ -191,7 +186,7 @@ build_gradle_dependencies = [
 
 
 # Web deployments
-[tool.briefcase.app.catan_board_gen.web]
+[tool.briefcase.app.catanboardgen.web]
 requires = [
     "toga-web~=0.4.0",
 ]
