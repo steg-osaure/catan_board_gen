@@ -367,6 +367,9 @@ class BalancedCatanBoardGenerator(toga.App):
             print(f"collapsed tile at {t_col.coords} to {n_col}")
 
             # propagate the option decrease
+            # TODO: remove number that was chosen from number deck,
+            # and remove option for all tiles if this number is not in the deck anymore
+
             if self.options["Number_clusters"]:
                 # remove number from neighbouring tiles' options
                 print(f"neighbouring tiles: {t_col.neighbours()}")
@@ -379,7 +382,11 @@ class BalancedCatanBoardGenerator(toga.App):
 
             if self.options["Number_repeats"]:
                 # remove number from same ressource tiles' options
-                pass
+                non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
+                for n in non_collapsed_same_res:
+                    n.num_options = [num for num in n.num_options if num != n_col]
+
+
 
 
             nb_iter += 1
