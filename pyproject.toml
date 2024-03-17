@@ -1,6 +1,6 @@
 # This project was generated with 0.3.17 using template: https://github.com/beeware/briefcase-template@v0.3.17
 [tool.briefcase]
-project_name = "Balanced Catan Board Generator"
+project_name = "Catan Board Generator"
 bundle = "com.example"
 version = "0.0.1"
 url = "https://example.com/catan_board_gen"
@@ -9,9 +9,14 @@ author = "Stegosaure"
 author_email = "stegosaure@tutanota.com"
 
 [tool.briefcase.app.catan_board_gen]
-formal_name = "Balanced Catan Board Generator"
+formal_name = "Catan Board Generator"
 description = "Generate random, balanced boards for the board game Catan"
-long_description = """More details about the app should go here.
+long_description = """
+This program lets you generate random boards for the board game of Catan.
+Several options are available to make the board more balanced, for instance,
+prevent to many tiles of the same ressource type to be neighbouring each other.
+An option to generate bigger boards for the 5th and 6th player extension is also 
+available.
 """
 icon = "src/catan_board_gen/resources/catan_board_gen"
 sources = [
