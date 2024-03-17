@@ -14,6 +14,8 @@ from toga.colors import WHITE, rgb
 
 
 class BalancedCatanBoardGenerator(toga.App):
+    relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+
     def startup(self):
         """Construct and show the Toga application.
 
@@ -129,6 +131,8 @@ class BalancedCatanBoardGenerator(toga.App):
                 (3, -2, 'None', -1),
                 ] * self.options["More_players"]
 
+    def get_neighbours(self, x, y):
+        return [(i[0] + x, i[1] + y) for i in self.relative_neighbours]
                 
 
     def convert_coord_to_screen(self):
@@ -222,8 +226,6 @@ class BalancedCatanBoardGenerator(toga.App):
 
     def draw_port(self, port):
         x, y, t, o = port
-        print(x, y, t, o)
-
 
         with self.board_canvas.Stroke(line_width=2) as stroker:
                 stroker.arc(x, y, self.tile_size / 2)
@@ -288,6 +290,8 @@ class BalancedCatanBoardGenerator(toga.App):
                 ~all(self.check_ports())
                 & self.options["Balanced_ports"]
             )
+#            break
+#        return
 
 
         # Shuffling the numbers until a valid permutation is found
@@ -336,7 +340,14 @@ class BalancedCatanBoardGenerator(toga.App):
         return valid
 
     def check_ports(self):
-        return([True])
+
+        valid = [True] * len(self.ports)
+        for i, p in enumerate(self.ports):
+            x, y, r, o = p
+            neighbours = self.get_neighbours(x, y)
+            same_type_neighbours = [t.coords for t in self.tiles if t.coords in neighbours and t.ressource == r]
+            valid[i] = valid[i] & (len(same_type_neighbours)== 0)
+        return(valid)
 
 
     def check_number_clusters(self):
