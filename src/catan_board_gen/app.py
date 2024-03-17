@@ -295,6 +295,11 @@ class BalancedCatanBoardGenerator(toga.App):
 
 
         # Shuffling the numbers until a valid permutation is found
+
+        # Wave Function Collapse for numbers
+
+        self.num_wfc()
+        """
         is_valid = False
         while not is_valid:
             is_valid = True
@@ -315,6 +320,60 @@ class BalancedCatanBoardGenerator(toga.App):
             is_valid = is_valid & ~(
                 ~all(self.check_number_repeats()) & self.options["Number_repeats"]
             )
+        """
+
+    def num_wfc(self):
+
+        # setup
+        for t in self.tiles:
+
+            # All tiles get options set to all
+            t.num_options = [i for i in range(2, 7)] + [i for i in range(8, 13)]
+
+            # desert is collapsed into 7
+            if t.ressource == 'desert':
+                t.num_collapse(7)
+
+        # create a list, used as a stack, storing the changes applied,
+        # to backtrack in case there is no valid options left
+        self.num_stack = []
+
+        nb_iter = 0
+        while not all([t.num_collapsed for t in self.tiles]):
+
+            # pick the tile with the least options (from non-collapsed tiles)
+            #num_opt_list = [(i, len(t.num_options)) for (i,t) in enumerate(self.tiles) if not t.num_collapsed] 
+            num_idx_list = [i for (i,t) in enumerate(self.tiles) if not t.num_collapsed]
+            num_opt_list = [len(t.num_options) for (i,t) in enumerate(self.tiles) if not t.num_collapsed]
+
+            print(f"Iteration {nb_iter}, options are:")
+            print(num_opt_list)
+            for i in num_idx_list:
+                t = self.tiles[i]
+                print(f"{t.coords}, {t.ressource}, {t.num_options}")
+
+            argmin = where(num_opt_list, min(num_opt_list))
+            print(argmin)
+            r.shuffle(argmin)
+            print(argmin)
+            idx_to_collapse = num_idx_list[argmin[0]]
+            
+            # collapse it
+            print("collapsing tile ", idx_to_collapse)
+            self.tiles[idx_to_collapse].num_collapse()
+
+            # propagate the option decrease
+
+            nb_iter += 1
+#            if nb_iter >= 10:
+#                break
+
+        self.numbers_deck = [t.number for t in self.tiles]
+
+
+
+
+
 
     def ressource_neighbours(self):
         nb_neighbours = [0] * len(self.deck)
@@ -561,8 +620,27 @@ class Tile:
         # store number
         self.number = number
 
+        # info for Wave Function Collapsed for numbers
+        self.num_collapsed = False
+        self.num_options = [i for i in range(2, 7)] + [i for i in range(8, 13)]
+
     def neighbours(self):
         return [(i[0] + self.x, i[1] + self.y) for i in self.relative_neighbours]
+
+
+    def num_collapse(self, num = None):
+
+        # option to manually set the number to collapse to
+        if num is not None:
+            self.number = num
+            self.num_options = []
+            self.num_collapsed = True
+            return True
+
+        r.shuffle(self.num_options)
+        self.number = self.num_options[0]
+        self.num_collapsed = True
+        return True
 
 
 def where(l, element):
