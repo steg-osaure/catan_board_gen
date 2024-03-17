@@ -298,7 +298,9 @@ class BalancedCatanBoardGenerator(toga.App):
 
         # Wave Function Collapse for numbers
 
-        self.num_wfc()
+        is_valid = False
+        while not is_valid:
+            is_valid = self.num_wfc()
         """
         is_valid = False
         while not is_valid:
@@ -348,16 +350,16 @@ class BalancedCatanBoardGenerator(toga.App):
             num_idx_list = [i for (i,t) in enumerate(self.tiles) if not t.num_collapsed]
             num_opt_list = [len(t.num_options) for (i,t) in enumerate(self.tiles) if not t.num_collapsed]
 
-            print(f"Iteration {nb_iter}, options are:")
-            print(num_opt_list)
+#            print(f"Iteration {nb_iter}, options are:")
+#            print(num_opt_list)
             for i in num_idx_list:
                 t = self.tiles[i]
-                print(f"{t.coords}, {t.ressource}, {t.num_options}")
+#                print(f"{t.coords}, {t.ressource}, {t.num_options}")
 
             argmin = where(num_opt_list, min(num_opt_list))
-            print(argmin)
+#            print(argmin)
             r.shuffle(argmin)
-            print(argmin)
+#            print(argmin)
             idx_to_collapse = num_idx_list[argmin[0]]
 
             t_col = self.tiles[idx_to_collapse]
@@ -366,7 +368,7 @@ class BalancedCatanBoardGenerator(toga.App):
             #print("collapsing tile ", idx_to_collapse)
             t_col.num_collapse()
             n_col = t_col.number
-            print(f"collapsed tile at {t_col.coords} to {n_col}")
+#            print(f"collapsed tile at {t_col.coords} to {n_col}")
 
             # propagate the option decrease
 
@@ -382,9 +384,9 @@ class BalancedCatanBoardGenerator(toga.App):
 
             if self.options["Number_clusters"]:
                 # remove number from neighbouring tiles' options
-                print(f"neighbouring tiles: {t_col.neighbours()}")
+#                print(f"neighbouring tiles: {t_col.neighbours()}")
                 non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.num_collapsed)]
-                print(f"non-collapsed neighbouring tiles: {[n.coords for n in non_collapsed_neighbours]}")
+#                print(f"non-collapsed neighbouring tiles: {[n.coords for n in non_collapsed_neighbours]}")
                 for n in non_collapsed_neighbours:
                     n.num_options = [num for num in n.num_options if num != n_col]
 
@@ -396,8 +398,10 @@ class BalancedCatanBoardGenerator(toga.App):
                 for n in non_collapsed_same_res:
                     n.num_options = [num for num in n.num_options if num != n_col]
 
-
-
+            if any([((len(t.num_options) == 0) & (not t.num_collapsed)) for t in self.tiles]):
+                print("WFC failed")
+                #break
+                return False
 
             nb_iter += 1
 #            input()
@@ -405,6 +409,8 @@ class BalancedCatanBoardGenerator(toga.App):
 #                break
 
         self.numbers_deck = [t.number for t in self.tiles]
+        print("WFC passed")
+        return True
 
 
 
