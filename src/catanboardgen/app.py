@@ -13,7 +13,7 @@ from toga.constants import Baseline
 from toga.colors import WHITE, rgb
 
 
-class BalancedCatanBoardGenerator(toga.App):
+class CatanBoardGenerator(toga.App):
     relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
     def startup(self):
@@ -402,12 +402,39 @@ class BalancedCatanBoardGenerator(toga.App):
                 for n in non_collapsed_same_res:
                     n.num_options = [num for num in n.num_options if num != n_col]
 
-#                if n_col in [6, 8]:
-#                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
-#                    for n in non_collapsed_same_res:
-#                        n.num_options = [num for num in n.num_options if num != other_n]
+                # handling 6 and 8
+                if n_col in [6, 8]:
+                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+
+                    # print([[t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))] for res in self.ressource_list])
+                    # print([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) > 1 for res in self.ressource_list])
+                    # print(any([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) > 1 for res in self.ressource_list]))
+                    # ress_has_two68 = any([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) > 1 for res in self.ressource_list])
+
+                    # for 3-4 player games, each ressource can have at most one 6 or one 8
+                    # TODO: conditions for 5-6 players
+                    # for 5-6 player games, each ressource has at most one 6 and one 8
+                    # as soon as one ressource gets both picked, then the others can have at most one
+                    # effectivelly, exactly one 
+                    if (not self.options["More_players"]): #or (self.options["More_players"] and ress_has_two68):
+                        for n in non_collapsed_same_res:
+                            n.num_options = [num for num in n.num_options if num != other_n]
+
+                    # edge case for 5-6 players:
+                    # if a ressource gets both 6 and 8, but another ressource already has either one,
+                    # the other needs to get remove from its options
+                    # if ress_has_two68:
+                    #     for ress_to_fix in [res for res in self.ressource_list if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1]:
+                    #         t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
+                    #         n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
+                    #         other_n_res = 6 * (n_col == 8) + 8 * (n_col == 6)
+                    #         for n in [t for t in t_res if not t.num_collapsed]:
+                    #             n.num_options = [num for num in n.num_options if num != other_n_res]
+
+
 
             if any([((len(t.num_options) == 0) & (not t.num_collapsed)) for t in self.tiles]):
+                print("WFC failed")
                 return False
 
             nb_iter += 1
@@ -415,7 +442,14 @@ class BalancedCatanBoardGenerator(toga.App):
 #            if nb_iter >= 10:
 #                break
 
+        # TEMPORARY: if, in 5-6 player games, more than one ressource type has both 6 and 8
+        # (meaning one has neither), board is invalid
+        if self.options["More_players"] and any([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0 for res in self.ressource_list[:-1]]):
+            print("Board invalid: one ressource has no 6/8")
+            return False
+
         self.numbers_deck = [t.number for t in self.tiles]
+        print("WFC passed")
         return True
 
 
@@ -696,4 +730,4 @@ def where(l, element):
 
 
 def main():
-    return BalancedCatanBoardGenerator()
+    return CatanBoardGenerator()
