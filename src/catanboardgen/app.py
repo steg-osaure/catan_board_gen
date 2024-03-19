@@ -13,7 +13,7 @@ from toga.constants import Baseline
 from toga.colors import WHITE, rgb
 
 
-class CatanBoardGenerator(toga.App):
+class BalancedCatanBoardGenerator(toga.App):
     relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
     def startup(self):
@@ -65,6 +65,18 @@ class CatanBoardGenerator(toga.App):
         # show the window
         self.main_window.show()
 
+    def get_nums(self):
+        offset = 0 + 1 * self.options["More_players"]
+        # the deck of numbers to use
+        self.numbers_deck = [2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (
+            2 + offset
+        )
+
+        # Assing the desert tiles with number 7
+        desert_idx = where(self.deck, "desert")
+        for i in desert_idx[::-1]:
+            self.numbers_deck.insert(i, 7)
+
     def get_tiles(self):
         offset = 0 + 1 * self.options["More_players"]
 
@@ -88,15 +100,8 @@ class CatanBoardGenerator(toga.App):
             + (1 + 1 * offset) * ["desert"]
         )
 
-        # the deck of numbers to use
-        self.numbers_deck = [2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (
-            2 + offset
-        )
+        self.get_nums()
 
-        # Assing the desert tiles with number 7
-        desert_idx = where(self.deck, "desert")
-        for i in desert_idx[::-1]:
-            self.numbers_deck.insert(i, 7)
 
         # Generate the tiles
         self.tiles = [
@@ -266,6 +271,7 @@ class CatanBoardGenerator(toga.App):
 
     def generate_pressed(self, widget):
         self.get_tiles()
+        #self.get_nums()
         self.shuffle_and_check()
         self.draw()
 
@@ -301,6 +307,7 @@ class CatanBoardGenerator(toga.App):
         is_valid = False
         while not is_valid:
             is_valid = self.num_wfc()
+
         """
         is_valid = False
         while not is_valid:
@@ -325,11 +332,13 @@ class CatanBoardGenerator(toga.App):
         """
 
     def num_wfc(self):
+        self.get_nums()
 
         # setup
         for t in self.tiles:
 
             # All tiles get options set to all
+            t.num_collapsed = False
             t.num_options = [i for i in range(2, 7)] + [i for i in range(8, 13)]
 
             # desert is collapsed into 7
@@ -341,34 +350,27 @@ class CatanBoardGenerator(toga.App):
         self.num_stack = []
 
         self.board_num_options = self.numbers_deck.copy()
+        self.board_num_options = [n for n in self.board_num_options if n != 7]
 
         nb_iter = 0
         while not all([t.num_collapsed for t in self.tiles]):
 
             # pick the tile with the least options (from non-collapsed tiles)
-            #num_opt_list = [(i, len(t.num_options)) for (i,t) in enumerate(self.tiles) if not t.num_collapsed] 
             num_idx_list = [i for (i,t) in enumerate(self.tiles) if not t.num_collapsed]
             num_opt_list = [len(t.num_options) for (i,t) in enumerate(self.tiles) if not t.num_collapsed]
 
-#            print(f"Iteration {nb_iter}, options are:")
-#            print(num_opt_list)
             for i in num_idx_list:
                 t = self.tiles[i]
-#                print(f"{t.coords}, {t.ressource}, {t.num_options}")
 
             argmin = where(num_opt_list, min(num_opt_list))
-#            print(argmin)
             r.shuffle(argmin)
-#            print(argmin)
             idx_to_collapse = num_idx_list[argmin[0]]
 
             t_col = self.tiles[idx_to_collapse]
             
             # collapse it
-            #print("collapsing tile ", idx_to_collapse)
             t_col.num_collapse()
             n_col = t_col.number
-#            print(f"collapsed tile at {t_col.coords} to {n_col}")
 
             # propagate the option decrease
 
@@ -380,17 +382,19 @@ class CatanBoardGenerator(toga.App):
                     if not t.num_collapsed:
                         t.num_options = [num for num in t.num_options if num != n_col]
 
-
-
             if self.options["Number_clusters"]:
                 # remove number from neighbouring tiles' options
-#                print(f"neighbouring tiles: {t_col.neighbours()}")
                 non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.num_collapsed)]
-#                print(f"non-collapsed neighbouring tiles: {[n.coords for n in non_collapsed_neighbours]}")
                 for n in non_collapsed_neighbours:
                     n.num_options = [num for num in n.num_options if num != n_col]
 
-                #pass
+                # 6 and 8
+                if n_col in [6, 8]:
+                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+                    for n in non_collapsed_neighbours:
+                        n.num_options = [num for num in n.num_options if num != other_n]
+
+
 
             if self.options["Number_repeats"]:
                 # remove number from same ressource tiles' options
@@ -398,9 +402,12 @@ class CatanBoardGenerator(toga.App):
                 for n in non_collapsed_same_res:
                     n.num_options = [num for num in n.num_options if num != n_col]
 
+#                if n_col in [6, 8]:
+#                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+#                    for n in non_collapsed_same_res:
+#                        n.num_options = [num for num in n.num_options if num != other_n]
+
             if any([((len(t.num_options) == 0) & (not t.num_collapsed)) for t in self.tiles]):
-                print("WFC failed")
-                #break
                 return False
 
             nb_iter += 1
@@ -409,7 +416,6 @@ class CatanBoardGenerator(toga.App):
 #                break
 
         self.numbers_deck = [t.number for t in self.tiles]
-        print("WFC passed")
         return True
 
 
@@ -690,4 +696,4 @@ def where(l, element):
 
 
 def main():
-    return CatanBoardGenerator()
+    return BalancedCatanBoardGenerator()

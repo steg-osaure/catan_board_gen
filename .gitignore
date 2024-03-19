@@ -60,3 +60,16 @@ var/
 
 # Briefcase log files
 logs/
+
+# ignore vim swap files
+*.swp
+*.swo
+.*.swp
+.*.swo
+
+# ignore latex produced files
+*.aux
+*.lof
+*.log
+*.lot
+*.toc
