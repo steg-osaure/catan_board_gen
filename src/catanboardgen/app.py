@@ -13,7 +13,7 @@ from toga.constants import Baseline
 from toga.colors import WHITE, rgb
 
 
-class BalancedCatanBoardGenerator(toga.App):
+class CatanBoardGenerator(toga.App):
     relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
     def startup(self):
@@ -690,4 +690,4 @@ def where(l, element):
 
 
 def main():
-    return BalancedCatanBoardGenerator()
+    return CatanBoardGenerator()
