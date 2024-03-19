@@ -280,24 +280,23 @@ class CatanBoardGenerator(toga.App):
         # Shuffling the tiles until a valid permutation is found
         is_valid = False
         while not is_valid:
-            is_valid = True
-            r.shuffle(self.deck)
-            for t, res in zip(self.tiles, self.deck):
-                t.ressource = res
+#            is_valid = True
+#            r.shuffle(self.deck)
+#            for t, res in zip(self.tiles, self.deck):
+#                t.ressource = res
 
-            # Test for cluster ressource, only mask if option is set
-            is_valid = is_valid & ~(
-                ~all(self.check_ressource_clusters())
-                & self.options["Ressource_clusters"]
-            )
+#            # Test for cluster ressource, only mask if option is set
+#            is_valid = is_valid & ~(
+#                ~all(self.check_ressource_clusters())
+#                & self.options["Ressource_clusters"]
+#            )
 
-            # Test for balanced ports:
-            is_valid = is_valid & ~(
-                ~all(self.check_ports())
-                & self.options["Balanced_ports"]
-            )
-#            break
-#        return
+#            # Test for balanced ports:
+#            is_valid = is_valid & ~(
+#                ~all(self.check_ports())
+#                & self.options["Balanced_ports"]
+#            )
+            is_valid = self.res_wfc()
 
 
         # Shuffling the numbers until a valid permutation is found
@@ -308,28 +307,90 @@ class CatanBoardGenerator(toga.App):
         while not is_valid:
             is_valid = self.num_wfc()
 
-        """
-        is_valid = False
-        while not is_valid:
-            is_valid = True
-            self.numbers_deck = [n for n in self.numbers_deck if n != 7]
-            r.shuffle(self.numbers_deck)
-            desert_idx = where(self.deck, "desert")
-            for i in desert_idx:
-                self.numbers_deck.insert(i, 7)
-            for t, n in zip(self.tiles, self.numbers_deck):
-                t.number = n
+    def res_wfc(self):
+        self.get_tiles()
 
-            # Test for clusters of numbers
-            is_valid = is_valid & ~(
-                ~all(self.check_number_clusters()) & self.options["Number_clusters"]
-            )
+        # setup
+        for t in self.tiles:
 
-            # Test for numbers repeating on the same ressource
-            is_valid = is_valid & ~(
-                ~all(self.check_number_repeats()) & self.options["Number_repeats"]
-            )
-        """
+            # All tiles get options set to all
+            t.res_collapsed = False
+            t.res_options = self.ressource_list.copy()
+
+        # create a list, used as a stack, storing the changes applied,
+        # to backtrack in case there is no valid options left
+        self.res_stack = []
+
+        self.board_res_options = self.deck.copy()
+        #self.board_res_options = [n for n in self.board_res_options if n != 7]
+
+        nb_iter = 0
+        while not all([t.res_collapsed for t in self.tiles]):
+
+            # pick the tile with the least options (from non-collapsed tiles)
+            res_idx_list = [i for (i,t) in enumerate(self.tiles) if not t.res_collapsed]
+            res_opt_list = [len(t.res_options) for (i,t) in enumerate(self.tiles) if not t.res_collapsed]
+
+            for i in res_idx_list:
+                t = self.tiles[i]
+
+            argmin = where(res_opt_list, min(res_opt_list))
+            r.shuffle(argmin)
+            idx_to_collapse = res_idx_list[argmin[0]]
+
+            t_col = self.tiles[idx_to_collapse]
+            
+            # collapse it
+            t_col.res_collapse()
+            res_col = t_col.ressource
+
+            # propagate the option decrease
+
+            # remove ressource that was chosen from deck,
+            self.board_res_options.pop(self.board_res_options.index(res_col))
+            # remove option for all tiles if this ressource is not in the deck anymore
+            if not res_col in self.board_res_options:
+                for t in self.tiles:
+                    if not t.res_collapsed:
+                        t.res_options = [res for res in t.res_options if res != res_col]
+
+            if self.options["Ressource_clusters"]:
+                # remove ressource from neighbouring tiles' options
+                non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.res_collapsed)]
+                for n in non_collapsed_neighbours:
+                    n.res_options = [res for res in n.res_options if res != res_col]
+
+#                # 6 and 8
+#                if n_col in [6, 8]:
+#                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+#                    for n in non_collapsed_neighbours:
+#                        n.num_options = [num for num in n.num_options if num != other_n]
+
+
+
+#            if self.options["Number_repeats"]:
+#                # remove number from same ressource tiles' options
+#                non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
+#                for n in non_collapsed_same_res:
+#                    n.num_options = [num for num in n.num_options if num != n_col]
+
+#                # handling 6 and 8
+#                if n_col in [6, 8]:
+#                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+
+
+            if any([((len(t.res_options) == 0) & (not t.res_collapsed)) for t in self.tiles]):
+                print("WFC failed")
+                return False
+
+            nb_iter += 1
+#            input()
+#            if nb_iter >= 10:
+#                break
+
+        self.deck = [t.ressource for t in self.tiles]
+        print("WFC passed")
+        return True
 
     def num_wfc(self):
         self.get_nums()
@@ -706,6 +767,10 @@ class Tile:
         self.num_collapsed = False
         self.num_options = [i for i in range(2, 7)] + [i for i in range(8, 13)]
 
+        # info for WFC for ressources
+        self.res_collapsed = False
+        self.res_options = []
+
     def neighbours(self):
         return [(i[0] + self.x, i[1] + self.y) for i in self.relative_neighbours]
 
@@ -722,6 +787,20 @@ class Tile:
         r.shuffle(self.num_options)
         self.number = self.num_options[0]
         self.num_collapsed = True
+        return True
+
+    def res_collapse(self, res = None):
+
+        # option to manually set the ressource to collapse to
+        if res is not None:
+            self.ressource = res
+            self.res_options = []
+            self.res_collapsed = True
+            return True
+
+        r.shuffle(self.res_options)
+        self.ressource = self.res_options[0]
+        self.res_collapsed = True
         return True
 
 
