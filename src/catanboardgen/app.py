@@ -358,26 +358,19 @@ class CatanBoardGenerator(toga.App):
                 # remove ressource from neighbouring tiles' options
                 non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.res_collapsed)]
                 for n in non_collapsed_neighbours:
-                    n.res_options = [res for res in n.res_options if res != res_col]
 
-#                # 6 and 8
-#                if n_col in [6, 8]:
-#                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
-#                    for n in non_collapsed_neighbours:
-#                        n.num_options = [num for num in n.num_options if num != other_n]
+                    # check number of collupsed neighbours:
+                    nb_res_neighbours = len([t for t in self.tiles if ((t.coords in n.neighbours()) and (t.res_collapsed) and (t.ressource == res_col))])
+
+                    # TODO: rework: tiles can still generate in "strings": 
+                    # at the end of a string, there is only one neighbour of the same type,
+                    # but the string can be more than 2 tiles long
+                    if ((res_col in ["wheat", "wood", "sheep"]) & (nb_res_neighbours >= 2)) \
+                        | ((res_col in ["brick", "stone", "desert"]) & (nb_res_neighbours >= 1)):
+                        n.res_options = [res for res in n.res_options if res != res_col]
 
 
-
-#            if self.options["Number_repeats"]:
-#                # remove number from same ressource tiles' options
-#                non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
-#                for n in non_collapsed_same_res:
-#                    n.num_options = [num for num in n.num_options if num != n_col]
-
-#                # handling 6 and 8
-#                if n_col in [6, 8]:
-#                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
-
+            # balanced ports
 
             if any([((len(t.res_options) == 0) & (not t.res_collapsed)) for t in self.tiles]):
                 print("WFC failed")
@@ -389,6 +382,18 @@ class CatanBoardGenerator(toga.App):
 #                break
 
         self.deck = [t.ressource for t in self.tiles]
+
+        # Temporary solutions for ressource clusters
+        nb_neighbours = self.ressource_neighbours()
+        valid = [
+            ((r in ["wheat", "wood", "sheep"]) & (n < 2))
+            | ((r in ["brick", "stone", "desert"]) & (n < 1))
+            for (r, n) in zip(self.deck, nb_neighbours)
+        ]
+        if not all(valid):
+            print("Invalid board: ressource has two many neighbours of the same type")
+            return False
+
         print("WFC passed")
         return True
 
