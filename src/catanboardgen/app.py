@@ -324,6 +324,14 @@ class CatanBoardGenerator(toga.App):
         self.board_res_options = self.deck.copy()
         #self.board_res_options = [n for n in self.board_res_options if n != 7]
 
+        if self.options["Balanced_ports"]:
+            for i, p in enumerate(self.ports):
+                x, y, res, o = p
+                neighbours = self.get_neighbours(x, y)
+                # remove ressource option from the neighbouring tiles
+                for t in [t for t in self.tiles if t.coords in neighbours]:
+                    t.res_options = [tres for tres in t.res_options if tres != res]
+
         nb_iter = 0
         while not all([t.res_collapsed for t in self.tiles]):
 
