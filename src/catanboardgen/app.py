@@ -332,7 +332,6 @@ class CatanBoardGenerator(toga.App):
                 for t in [t for t in self.tiles if t.coords in neighbours]:
                     t.res_options = [tres for tres in t.res_options if tres != res]
 
-        nb_iter = 0
         while not all([t.res_collapsed for t in self.tiles]):
 
             # pick the tile with the least options (from non-collapsed tiles)
@@ -381,13 +380,8 @@ class CatanBoardGenerator(toga.App):
             # balanced ports
 
             if any([((len(t.res_options) == 0) & (not t.res_collapsed)) for t in self.tiles]):
-                print("WFC failed")
                 return False
 
-            nb_iter += 1
-#            input()
-#            if nb_iter >= 10:
-#                break
 
         self.deck = [t.ressource for t in self.tiles]
 
@@ -399,10 +393,8 @@ class CatanBoardGenerator(toga.App):
             for (r, n) in zip(self.deck, nb_neighbours)
         ]
         if not all(valid):
-            print("Invalid board: ressource has two many neighbours of the same type")
             return False
 
-        print("WFC passed")
         return True
 
     def num_wfc(self):
@@ -426,7 +418,6 @@ class CatanBoardGenerator(toga.App):
         self.board_num_options = self.numbers_deck.copy()
         self.board_num_options = [n for n in self.board_num_options if n != 7]
 
-        nb_iter = 0
         while not all([t.num_collapsed for t in self.tiles]):
 
             # pick the tile with the least options (from non-collapsed tiles)
@@ -480,11 +471,6 @@ class CatanBoardGenerator(toga.App):
                 if n_col in [6, 8]:
                     other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
 
-                    # print([[t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))] for res in self.ressource_list])
-                    # print([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) > 1 for res in self.ressource_list])
-                    # print(any([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) > 1 for res in self.ressource_list]))
-                    # ress_has_two68 = any([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) > 1 for res in self.ressource_list])
-
                     # for 3-4 player games, each ressource can have at most one 6 or one 8
                     # TODO: conditions for 5-6 players
                     # for 5-6 player games, each ressource has at most one 6 and one 8
@@ -508,22 +494,14 @@ class CatanBoardGenerator(toga.App):
 
 
             if any([((len(t.num_options) == 0) & (not t.num_collapsed)) for t in self.tiles]):
-                print("WFC failed")
                 return False
-
-            nb_iter += 1
-#            input()
-#            if nb_iter >= 10:
-#                break
 
         # TEMPORARY: if, in 5-6 player games, more than one ressource type has both 6 and 8
         # (meaning one has neither), board is invalid
         if self.options["More_players"] and any([len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0 for res in self.ressource_list[:-1]]):
-            print("Board invalid: one ressource has no 6/8")
             return False
 
         self.numbers_deck = [t.number for t in self.tiles]
-        print("WFC passed")
         return True
 
 
@@ -635,11 +613,6 @@ class CatanBoardGenerator(toga.App):
 
     def on_option_switch(self, widget):
         self.options[widget.id.replace("_switch", "")] = widget.value
-        if self.options["More_players"] & ~self.prompted_warning:
-            self.prompted_warning = True
-            self.main_window.info_dialog(
-                "Warning", "Board generation may be slow for big boards"
-            )
 
     def show_description(self, widget, **kwargs):
         description_text = {
