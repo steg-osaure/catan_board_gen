@@ -386,14 +386,16 @@ class CatanBoardGenerator(toga.App):
         self.deck = [t.ressource for t in self.tiles]
 
         # Temporary solutions for ressource clusters
-        nb_neighbours = self.ressource_neighbours()
-        valid = [
-            ((r in ["wheat", "wood", "sheep"]) & (n < 2))
-            | ((r in ["brick", "stone", "desert"]) & (n < 1))
-            for (r, n) in zip(self.deck, nb_neighbours)
-        ]
-        if not all(valid):
-            return False
+        # only if option is set
+        if self.options["Ressource_clusters"]:
+            nb_neighbours = self.ressource_neighbours()
+            valid = [
+                ((r in ["wheat", "wood", "sheep"]) & (n < 2))
+                | ((r in ["brick", "stone", "desert"]) & (n < 1))
+                for (r, n) in zip(self.deck, nb_neighbours)
+            ]
+            if not all(valid):
+                return False
 
         return True
 
