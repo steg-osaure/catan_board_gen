@@ -192,4 +192,11 @@ requires = [
 ]
 style_framework = "Shoelace v2.3"
 
+[tool.black]
+line-length = 160
 
+[tool.mypy]
+namespace_packages = true
+explicit_package_bases = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
