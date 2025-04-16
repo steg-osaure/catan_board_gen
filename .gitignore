@@ -1,3 +1,9 @@
+# Beeware venv
+beeware/
+
+# 
+setup_environment.sh
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
