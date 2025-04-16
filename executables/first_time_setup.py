@@ -112,7 +112,7 @@ class EnvironmentSetup:
         # Ensure beeware requirements file exists and is updated
         lines = check_file(
             lines,
-            command=f"cp {req_scripts} {req_beeware}\n    python -m pip install pip==23.1.2\n    {pip_install_cmd} -r {req_scripts}",
+            command=f"cp {req_scripts} {req_beeware}\n    pip install --upgrade pip\n    {pip_install_cmd} -r {req_scripts}",
             file_to_check=req_beeware,
         )
         lines = diff_file(
@@ -184,8 +184,8 @@ def main() -> None:
     cbgen_env_setup = EnvironmentSetup()
     cbgen_env_setup.generate_setup()
 
-    # with subprocess.Popen("chmod a+x setup_environment.sh", shell=True) as process:
-    #    process.wait()
+    with subprocess.Popen("chmod a+x setup_environment.sh", shell=True) as process:
+        process.wait()
 
     print(
         "INFO:: catan_board_gen setup completed. Use `source setup_environment.sh` to initialize the environment."
