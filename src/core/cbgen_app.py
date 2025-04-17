@@ -5,6 +5,8 @@ from toga.style import Pack
 
 from typing import Any
 
+from logic import BoardGenerator
+
 
 class CBGenApp(toga.App):
     """Core application class."""
@@ -13,19 +15,15 @@ class CBGenApp(toga.App):
         """Initialize the application, creating the main window and UI components."""
         #####  Initiate the window and its content  #####
 
-        self.main_window = toga.MainWindow(
-            title=self.formal_name,
-        )
-
+        self.main_window = toga.MainWindow(title=self.formal_name)
         self.initialize_options()
         self.prompted_warning = False
 
         # initiate all the widgets
         self.create_widgets()
 
+        # create and show the window
         self.initialize_window()
-
-        # show the window
         self.main_window.show()
 
     def initialize_options(self) -> None:
@@ -63,7 +61,7 @@ class CBGenApp(toga.App):
         # self.get_nums()
         # self.shuffle_and_check()
         # self.draw()
-        pass
+        BoardGenerator().call()
 
     def on_option_switch(self, widget: toga.Widget) -> None:
         """Handle changes to toggle switches in the UI.
