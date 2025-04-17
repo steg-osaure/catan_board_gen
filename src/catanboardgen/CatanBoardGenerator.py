@@ -203,7 +203,7 @@ class CatanBoardGenerator(toga.App):
             edge_size (int, optional): Size of the hexagonal edges. Defaults to 30.
             fill_color (str, optional): Fill color for the tile. Defaults to "BLANK".
         """
-        font = toga.Font(family=SANS_SERIF, size=edge_size / 2)
+        font = toga.Font(family=SANS_SERIF, size=edge_size // 2)
         w, h = self.board_canvas.measure_text(str(num), font)
 
         # Drawing the actual hexagonal tile
@@ -259,7 +259,7 @@ class CatanBoardGenerator(toga.App):
             filler.ellipse(x, y, self.tile_size / 2, self.tile_size / 2)
 
         if t == "None":
-            font = toga.Font(family=SANS_SERIF, size=self.tile_size / 3)
+            font = toga.Font(family=SANS_SERIF, size=self.tile_size // 3)
             w, h = self.board_canvas.measure_text("3:1", font)
 
             with self.board_canvas.Fill(x, y, color="black") as text_filler:
@@ -723,7 +723,7 @@ class CatanBoardGenerator(toga.App):
         self.generate_button = toga.Button(
             style=Pack(flex=1),
             text="Generate board",
-            on_press=self.generate_pressed,
+            on_press=self.generate_pressed,  # type: ignore
         )
 
         # Put all switches and button in the same box
