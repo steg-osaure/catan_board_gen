@@ -1,5 +1,7 @@
-PyGObject==3.50.0
-toga
+pycairo==1.26.0
+PyGObject==3.48.1
+Travertino==0.3.0
+toga-core==0.4.2
 briefcase
 mypy
 pylint
