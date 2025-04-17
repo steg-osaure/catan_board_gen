@@ -1,4 +1,6 @@
 PyGObject==3.50.0
+toga
 briefcase
 mypy
 pylint
+flake8

@@ -22,8 +22,8 @@ run_step() {
 
 # Run steps
 run_step "Type checking with mypy" "mypy $1"
-run_step "Linting with pylint" "pylint --rcfile $PYRAT_PATH/settings/.pylintrc --fail-under=10.00 $1"
-#run_step "Code style check with flake8" "flake8 --config $PYRAT_PATH/settings/.flake8 $1"
+run_step "Linting with pylint" "pylint --rcfile $CBGEN_PATH/settings/.pylintrc --fail-under=10.00 $1"
+run_step "Code style check with flake8" "flake8 --config $CBGEN_PATH/settings/.flake8 $1"
 
 # Final message
 echo -e "${GREEN}=================================${RESET}"
