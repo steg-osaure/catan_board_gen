@@ -1,0 +1,31 @@
+"""Module containing the Tile class."""
+
+import random as r
+
+
+class Tile:
+    """Represents a single tile on the Catan board.
+
+    Attributes:
+        x (int): The x-coordinate of the tile in hex grid space.
+        y (int): The y-coordinate of the tile in hex grid space.
+        coords (tuple): A tuple containing the (x, y) coordinates of the tile.
+        ressource (str): The type of resource this tile represents (e.g., "brick", "wood").
+        number (int): The number token value assigned to this tile.
+        num_collapsed (bool): Whether the number has been assigned (collapsed) for this tile.
+        num_options (list): Possible number token values for the tile.
+        res_collapsed (bool): Whether the resource has been assigned (collapsed) for this tile.
+        res_options (list): Possible resource types for the tile.
+    """
+
+    def __init__(self, x: int = 0, y: int = 0, ressource: str = "desert", number: int = None):
+        """Initialize a Tile instance.
+
+        Args:
+            x (int, optional): The x-coordinate of the tile in hex grid space. Defaults to 0.
+            y (int, optional): The y-coordinate of the tile in hex grid space. Defaults to 0.
+            ressource (str, optional): The type of resource the tile represents.\
+                Defaults to "desert".
+            number (int, optional): The number token value assigned to this tile. Defaults to None.
+        """
+        super().__init__(x, y)

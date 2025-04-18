@@ -4,7 +4,8 @@ import math
 import random as r
 
 
-from logic.tile import Tile
+from logic.ressource_tile import RessourceTile
+from logic.port_tile import PortTile
 from logic.utils import where
 
 from typing import Any
@@ -61,7 +62,7 @@ class BoardGenerator:
         self.get_nums()
 
         # Generate the tiles
-        self.tiles = [Tile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
+        self.tiles = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
 
         # generate the ports
         self.ports = [
@@ -144,7 +145,7 @@ class BoardGenerator:
                 x, y, res, _o = p
                 neighbours = self.get_neighbours(x, y)
                 # remove resource option from the neighboring tiles
-                for t in [t for t in self.tiles if t.coords in neighbours]:
+                for t in [t for t in self.tiles if t.get_coords() in neighbours]:
                     t.res_options = [tres for tres in t.res_options if tres != res]
 
         while not all(t.res_collapsed for t in self.tiles):
@@ -178,11 +179,11 @@ class BoardGenerator:
 
             if self.options["Ressource_clusters"]:
                 # remove resource from neighboring tiles' options
-                non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.res_collapsed)]
+                non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.res_collapsed)]
                 for n in non_collapsed_neighbours:
 
                     # check number of collapsed neighbors:
-                    nb_res_neighbours = len([t for t in self.tiles if ((t.coords in n.neighbours()) and (t.res_collapsed) and (t.ressource == res_col))])
+                    nb_res_neighbours = len([t for t in self.tiles if ((t.get_coords() in n.neighbours()) and (t.res_collapsed) and (t.ressource == res_col))])
 
                     # TODO: rework: tiles can still generate in "strings":
                     # at the end of a string, there is only one neighbor of the same type,
@@ -274,7 +275,7 @@ class BoardGenerator:
 
             if self.options["Number_clusters"]:
                 # remove number from neighbouring tiles' options
-                non_collapsed_neighbours = [t for t in self.tiles if (t.coords in t_col.neighbours() and not t.num_collapsed)]
+                non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.num_collapsed)]
                 for n in non_collapsed_neighbours:
                     n.num_options = [num for num in n.num_options if num != n_col]
 
@@ -345,7 +346,7 @@ class BoardGenerator:
         nb_neighbours = [0] * len(self.deck)
         for i, t in enumerate(self.tiles):
             same_ressources_idx = where(self.deck, t.ressource)
-            same_ressources_centers = [self.tiles[i].coords for i in same_ressources_idx]
+            same_ressources_centers = [self.tiles[i].get_coords() for i in same_ressources_idx]
             neighbours = t.neighbours()
             same_type_neighbours = [s for s in same_ressources_centers if s in neighbours]
             nb_neighbours[i] = len(same_type_neighbours)
@@ -379,7 +380,7 @@ class BoardGenerator:
         for i, p in enumerate(self.ports):
             x, y, r, _o = p
             neighbours = self.get_neighbours(x, y)
-            same_type_neighbours = [t.coords for t in self.tiles if t.coords in neighbours and t.ressource == r]
+            same_type_neighbours = [t.get_coords() for t in self.tiles if t.get_coords() in neighbours and t.ressource == r]
             valid[i] = valid[i] & (len(same_type_neighbours) == 0)
         return valid
 
@@ -399,7 +400,7 @@ class BoardGenerator:
 
             # check that no same numbers are touching
             same_num_idx = where(self.numbers_deck, t.number)
-            same_num_centers = [self.tiles[j].coords for j in same_num_idx if i != j]
+            same_num_centers = [self.tiles[j].get_coords() for j in same_num_idx if i != j]
 
             neighbours = t.neighbours()
             same_num_neighbours = [s for s in same_num_centers if s in neighbours]
@@ -416,7 +417,7 @@ class BoardGenerator:
             others_idx = [j for j in idx_68 if i != j]
 
             others = [self.tiles[o] for o in others_idx]
-            others_coords = [o.coords for o in others]
+            others_coords = [o.get_coords() for o in others]
 
             neighbours_68 = [s for s in others_coords if s in neighbours]
 

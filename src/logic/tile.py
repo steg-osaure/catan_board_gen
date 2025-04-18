@@ -1,78 +1,47 @@
 """Module containing the Tile class."""
 
+from abc import abstractmethod
 import random as r
 
 
 class Tile:
     """Represents a single tile on the Catan board.
+    This is the mother class, specific tile types (resource tiles, ports, sea) should inherit from this class.
 
     Attributes:
         x (int): The x-coordinate of the tile in hex grid space.
         y (int): The y-coordinate of the tile in hex grid space.
-        coords (tuple): A tuple containing the (x, y) coordinates of the tile.
-        ressource (str): The type of resource this tile represents (e.g., "brick", "wood").
-        number (int): The number token value assigned to this tile.
-        num_collapsed (bool): Whether the number has been assigned (collapsed) for this tile.
-        num_options (list): Possible number token values for the tile.
-        res_collapsed (bool): Whether the resource has been assigned (collapsed) for this tile.
-        res_options (list): Possible resource types for the tile.
     """
-
-    # the possible colors, matching the ressource type
-    colors = {
-        "brick": "coral",
-        "wood": "forestgreen",
-        "sheep": "palegreen",
-        "wheat": "gold",
-        "stone": "slategrey",
-        "desert": "peachpuff",
-    }
-
-    # coordinates of the corners
-    # in hex grid coordinates:
-    corners = [
-        (1 / 3, 1 / 3),
-        (-1 / 3, 2 / 3),
-        (-2 / 3, 1 / 3),
-        (-1 / 3, -1 / 3),
-        (1 / 3, -2 / 3),
-        (2 / 3, -1 / 3),
-    ]
 
     relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
-    def __init__(
-        self, x: int = 0, y: int = 0, ressource: str = "desert", number: int = None
-    ):
+    # coordinates of the corners
+    # in hex grid coordinates:
+    # corners = [
+    #    (1 / 3, 1 / 3),
+    #    (-1 / 3, 2 / 3),
+    #    (-2 / 3, 1 / 3),
+    #    (-1 / 3, -1 / 3),
+    #    (1 / 3, -2 / 3),
+    #    (2 / 3, -1 / 3),
+    # ]
+
+    def __init__(self, x: int = 0, y: int = 0) -> None:
         """Initialize a Tile instance.
 
         Args:
             x (int, optional): The x-coordinate of the tile in hex grid space. Defaults to 0.
             y (int, optional): The y-coordinate of the tile in hex grid space. Defaults to 0.
-            ressource (str, optional): The type of resource the tile represents.\
-                Defaults to "desert".
-            number (int, optional): The number token value assigned to this tile. Defaults to None.
         """
 
         # store x, y (hex coordinates)
         self.x, self.y = x, y
-        self.coords = (self.x, self.y)
 
-        # store ressource
-        self.ressource = ressource
+    def get_coords(self) -> tuple[int, int]:
+        """Getter for (self.x, self.y) tile coordinates."""
+        return (self.x, self.y)
 
-        # store number
-        self.number = number
-
-        # info for Wave Function Collapsed for numbers
-        self.num_collapsed = False
-        self.num_options = list(range(2, 7)) + list(range(8, 13))
-
-        # info for WFC for ressources
-        self.res_collapsed = False
-        self.res_options = []
-
-    def neighbours(self):
+    def neighbours(self) -> list[tuple[int, int]]:
         """Calculate the coordinates of neighboring tiles in the hex grid.
 
         Uses the tile's current position to determine the coordinates of its six neighbors.
@@ -83,54 +52,10 @@ class Tile:
 
         return [(i[0] + self.x, i[1] + self.y) for i in self.relative_neighbours]
 
-    def num_collapse(self, num=None):
-        """Assign a number token to the tile using Wave Function Collapse.
+    @abstractmethod
+    def draw(self) -> None:
+        """Draw the tile on the canvas.
 
-        If a specific number is provided, it is directly assigned. Otherwise,
-        the method randomly selects from available options.
-
-        Args:
-            num (int, optional): A specific number token to assign to the tile.
-                                If not provided, one is randomly chosen.
-
-        Returns:
-            bool: True if the number was successfully assigned, False otherwise.
+        This method should be implemented by subclasses to define how the tile is rendered.
         """
-
-        # option to manually set the number to collapse to
-        if num is not None:
-            self.number = num
-            self.num_options = []
-            self.num_collapsed = True
-            return True
-
-        r.shuffle(self.num_options)
-        self.number = self.num_options[0]
-        self.num_collapsed = True
-        return True
-
-    def res_collapse(self, res=None):
-        """Assign a resource type to the tile using Wave Function Collapse.
-
-        If a specific resource is provided, it is directly assigned. Otherwise,
-        the method randomly selects from available options.
-
-        Args:
-            res (str, optional): A specific resource type to assign to the tile.
-                                If not provided, one is randomly chosen.
-
-        Returns:
-            bool: True if the resource was successfully assigned, False otherwise.
-        """
-
-        # option to manually set the ressource to collapse to
-        if res is not None:
-            self.ressource = res
-            self.res_options = []
-            self.res_collapsed = True
-            return True
-
-        r.shuffle(self.res_options)
-        self.ressource = self.res_options[0]
-        self.res_collapsed = True
-        return True
+        pass
