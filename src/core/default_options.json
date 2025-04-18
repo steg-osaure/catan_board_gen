@@ -1,0 +1,27 @@
+{
+    "More_players": {
+        "default": false,
+        "box_text": "5/6 players",
+        "description": "Bigger board for games up to 6 players"
+    },
+    "Ressource_clusters": {
+        "default": true,
+        "box_text": "No ressource clusters",
+        "description": "Prevent clusters of similar ressources.\nFor brick and stones (and, for 5-6 players, also desert), prevents two similar tiles from touching.\nFor wood, wheat and sheep, prevents three similar tiles from touching."
+    },
+    "Balanced_ports": {
+        "default": true,
+        "box_text": "Balanced ports",
+        "description": "Prevent ressourses of touching their\ncorresponding ports."
+    },
+    "Number_clusters": {
+        "default": true,
+        "box_text": "No number clusters",
+        "description": "Prevent similar numbers from being next to one another.\nAlso prevents 6 and 8 to be next to another 6 or 8."
+    },
+    "Number_repeats": {
+        "default": true,
+        "box_text": "No repeating numbers",
+        "description": "Prevent numbers from being twice on the same ressource.\nAlso prevent ressources to have more than one 6 or one 8\n(or, for 5-6 players, two 6 or two 8)."
+    }
+}

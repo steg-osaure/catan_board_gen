@@ -7,6 +7,8 @@ from typing import Any
 
 from logic import BoardGenerator
 
+from .option_handler import OptionHandler
+
 
 class CBGenApp(toga.App):
     """Core application class."""
@@ -15,26 +17,20 @@ class CBGenApp(toga.App):
         """Initialize the application, creating the main window and UI components."""
         #####  Initiate the window and its content  #####
 
+        print("Creating window")
         self.main_window = toga.MainWindow(title=self.formal_name)
-        self.initialize_options()
+        print("Initializing options")
+        self.options = OptionHandler()
         self.prompted_warning = False
 
         # initiate all the widgets
+        print("creating widgets")
         self.create_widgets()
 
         # create and show the window
+        print("initializing and showing window")
         self.initialize_window()
         self.main_window.show()
-
-    def initialize_options(self) -> None:
-        # options, for the logic:
-        self.options = {
-            "More_players": False,
-            "Ressource_clusters": True,
-            "Balanced_ports": True,
-            "Number_clusters": True,
-            "Number_repeats": True,
-        }
 
     def initialize_window(self) -> None:
         # put them in a box
@@ -72,7 +68,7 @@ class CBGenApp(toga.App):
             widget (toga.Widget): The widget that triggered the event.
         """
 
-        self.options[widget.id.replace("_switch", "")] = widget.value
+        # self.options[widget.id.replace("_switch", "")] = widget.value
 
     def show_description(self, widget: toga.Widget, **kwargs: Any) -> None:
         """Display a description dialog for the selected option.
@@ -84,19 +80,7 @@ class CBGenApp(toga.App):
             **kwargs: Additional arguments passed by the Toga framework.
         """
 
-        description_text = {
-            "More_players_info_button": "Bigger board for games up to 6 players",
-            "Ressource_clusters_info_button": "Prevent clusters of similar ressources.\
-                For brick and stones (and, for 5-6 players, also desert), prevents two similar tiles from touching.\
-                For wood, wheat and sheep, prevents three similar tiles from touching.",
-            "Balanced_ports_info_button": "Prevent ressourses of touching their\
-                corresponding ports.",
-            "Number_clusters_info_button": "Prevent similar numbers from being next to one another.\
-                Also prevents 6 and 8 to be next to another 6 or 8.",
-            "Number_repeats_info_button": "Prevent numbers from being twice on the same ressource.\
-                Also prevent ressources to have more than one 6 or one 8\
-                (or, for 5-6 players, two 6 or two 8).",
-        }[widget.id]
+        description_text = self.options.get_description(widget.id.replace("_info_button", ""))
 
         title_text = " ".join(widget.id.split("_")[:2])
 
@@ -125,30 +109,21 @@ class CBGenApp(toga.App):
             toga.Button(
                 text="(?)",
                 on_press=self.show_description,
-                id=f"{t}_info_button",
+                id=f"{opt}_info_button",
             )
-            for t in self.options
-        ]
-
-        # Text to display on the switches
-        switches_text = [
-            "5/6 players",
-            "No ressource clusters",
-            "Balanced ports",
-            "No number clusters",
-            "No repeating numbers",
+            for opt in self.options.get_all()
         ]
 
         # All the switches
         self.switches = [
             toga.Switch(
                 style=Pack(flex=1),
-                text=t,
+                text=self.options.get_box_text(opt_name),
                 on_change=self.on_option_switch,
-                value=v,
-                id=f"{i}_switch",
+                value=self.options.get_option(opt_name),
+                id=f"{opt_name}_switch",
             )
-            for t, i, v in zip(switches_text, self.options.keys(), self.options.values())
+            for opt_name in self.options.get_all()
         ]
 
         # Pair the switches and buttons
