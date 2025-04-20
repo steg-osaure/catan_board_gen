@@ -57,7 +57,7 @@ class CBGenApp(toga.App):
         # self.get_nums()
         # self.shuffle_and_check()
         # self.draw()
-        BoardGenerator().call()
+        BoardGenerator(self.options).call()
 
     def on_option_switch(self, widget: toga.Widget) -> None:
         """Handle changes to toggle switches in the UI.
@@ -68,7 +68,7 @@ class CBGenApp(toga.App):
             widget (toga.Widget): The widget that triggered the event.
         """
 
-        # self.options[widget.id.replace("_switch", "")] = widget.value
+        self.options.set_option(widget.id.replace("_switch", ""), widget.value)
 
     def show_description(self, widget: toga.Widget, **kwargs: Any) -> None:
         """Display a description dialog for the selected option.
