@@ -7,6 +7,8 @@ from typing import Any
 
 from logic import BoardGenerator
 
+# from gui.cb_gui import CBGui
+
 from .option_handler import OptionHandler
 
 
@@ -15,22 +17,53 @@ class CBGenApp(toga.App):
 
     def startup(self) -> None:
         """Initialize the application, creating the main window and UI components."""
+
+        self.options = OptionHandler()
+        self.board_gen = BoardGenerator(self.options)
         #####  Initiate the window and its content  #####
 
-        print("Creating window")
         self.main_window = toga.MainWindow(title=self.formal_name)
-        print("Initializing options")
-        self.options = OptionHandler()
         self.prompted_warning = False
+        # self.gui = CBGui(self.options)
+        # self.main_window.content = self.gui.call()
 
         # initiate all the widgets
-        print("creating widgets")
-        self.create_widgets()
-
         # create and show the window
-        print("initializing and showing window")
-        self.initialize_window()
+        # self.create_widgets()
+        # self.initialize_window()
+        main_box = toga.Box(
+            style=Pack(
+                direction="column",
+                padding_top=5,
+                padding_right=5,
+                padding_bottom=5,
+                padding_left=5,
+            ),
+        )
+
+        box = toga.Box(
+            style=Pack(
+                direction="column",
+                padding_top=5,
+                padding_right=5,
+                padding_bottom=5,
+                padding_left=5,
+            ),
+        )
+        test_image = toga.Image("../catanboardgen/resources/catanboardgen.png")
+        self.imview = toga.ImageView(test_image, style=Pack(width=1000))
+        box.add(self.imview)
+
+        self.scroll = toga.ScrollContainer(content=box, id="scroll_content")
+        self.zoom_button = toga.Button(text="Zoom", on_press=self.zoom)
+        main_box.add(self.scroll)
+        main_box.add(self.zoom_button)
+        self.main_window.content = main_box
+
         self.main_window.show()
+
+    def zoom(self, widget: toga.Widget) -> None:
+        self.imview.style.width = 500
 
     def initialize_window(self) -> None:
         # put them in a box
@@ -53,11 +86,9 @@ class CBGenApp(toga.App):
 
     def generate_pressed(self, widget: toga.Widget) -> None:
         """Handler for the generate board button press event."""
-        # self.get_tiles()
-        # self.get_nums()
-        # self.shuffle_and_check()
+        self.board_gen.set_options(self.options)
+        self.board_gen.call()
         # self.draw()
-        BoardGenerator(self.options).call()
 
     def on_option_switch(self, widget: toga.Widget) -> None:
         """Handle changes to toggle switches in the UI.

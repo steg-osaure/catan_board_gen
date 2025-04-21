@@ -106,3 +106,11 @@ class RessourceTile(Tile):
         self.ressource = self.res_options[0]
         self.res_collapsed = True
         return True
+
+    def Print(self):
+        """Print the tile's details.
+
+        Returns:
+            str: A string representation of the tile's coordinates, resource type, and number token.
+        """
+        return f"({self.x}, {self.y}) {self.ressource} {self.number}"

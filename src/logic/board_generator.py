@@ -24,6 +24,9 @@ class BoardGenerator:
         # options, for the logic:
         self.options = options
 
+    def set_options(self, options: OptionHandler) -> None:
+        self.options = options
+
     def get_nums(self) -> None:
         """Generate the deck of numbers for the tiles, including handling desert tiles."""
         offset = 0 + 1 * self.options.get_option("More_players")
@@ -104,7 +107,14 @@ class BoardGenerator:
         self.get_tiles()
         # self.get_nums()
         self.shuffle_and_check()
+
         # self.draw()
+        print(self.numbers_deck)
+        print(self.deck)
+        import pdb
+
+        pdb.set_trace()
+        print(self.tiles)
 
     def shuffle_and_check(self) -> None:
         """Shuffle the tiles and numbers until a valid board configuration is found."""
@@ -325,8 +335,6 @@ class BoardGenerator:
 
         self.numbers_deck = [t.number for t in self.tiles]
 
-        print(self.numbers_deck)
-        print(self.deck)
         return True
 
     def ressource_neighbours(self) -> list[int]:
