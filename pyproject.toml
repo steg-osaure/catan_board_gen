@@ -4,7 +4,7 @@ project_name = "Catan Board Generator"
 bundle = "com.example"
 version = "0.0.2"
 url = "https://github.com/steg-osaure/catan_board_gen"
-license = "BSD license"
+license.file = "LICENSE"
 author = "Steg Osaure"
 author_email = "stegosaure@tutanota.com"
 
