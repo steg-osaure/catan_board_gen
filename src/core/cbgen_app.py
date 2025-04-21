@@ -6,6 +6,7 @@ from toga.style import Pack
 from typing import Any
 
 from logic import BoardGenerator
+from drawer.board_drawer import BoardDrawer
 
 # from gui.cb_gui import CBGui
 
@@ -20,17 +21,17 @@ class CBGenApp(toga.App):
 
         self.options = OptionHandler()
         self.board_gen = BoardGenerator(self.options)
+        self.board_draw = BoardDrawer()
         #####  Initiate the window and its content  #####
 
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.prompted_warning = False
-        # self.gui = CBGui(self.options)
-        # self.main_window.content = self.gui.call()
 
         # initiate all the widgets
         # create and show the window
-        # self.create_widgets()
-        # self.initialize_window()
+        self.create_widgets()
+        self.initialize_window()
+        """
         main_box = toga.Box(
             style=Pack(
                 direction="column",
@@ -59,6 +60,7 @@ class CBGenApp(toga.App):
         main_box.add(self.scroll)
         main_box.add(self.zoom_button)
         self.main_window.content = main_box
+        """
 
         self.main_window.show()
 
@@ -87,7 +89,9 @@ class CBGenApp(toga.App):
     def generate_pressed(self, widget: toga.Widget) -> None:
         """Handler for the generate board button press event."""
         self.board_gen.set_options(self.options)
-        self.board_gen.call()
+        self.current_board = self.board_gen.call()
+        # self.board_draw.draw_board(self.current_board, self.board_canvas.style)
+        self.board_draw.draw(self.board_canvas)
         # self.draw()
 
     def on_option_switch(self, widget: toga.Widget) -> None:

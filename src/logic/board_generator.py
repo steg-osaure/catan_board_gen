@@ -109,12 +109,12 @@ class BoardGenerator:
         self.shuffle_and_check()
 
         # self.draw()
-        print(self.numbers_deck)
-        print(self.deck)
-        import pdb
-
-        pdb.set_trace()
-        print(self.tiles)
+        # print(self.numbers_deck)
+        # print(self.deck)
+        # for t in self.tiles:
+        # print(t)
+        #    t.Print()
+        return self.tiles
 
     def shuffle_and_check(self) -> None:
         """Shuffle the tiles and numbers until a valid board configuration is found."""

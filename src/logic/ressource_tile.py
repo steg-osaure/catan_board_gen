@@ -113,4 +113,4 @@ class RessourceTile(Tile):
         Returns:
             str: A string representation of the tile's coordinates, resource type, and number token.
         """
-        return f"({self.x}, {self.y}) {self.ressource} {self.number}"
+        print(f"({self.x}, {self.y}) {self.ressource} {self.number}")
