@@ -67,7 +67,7 @@ class BoardGenerator:
         self.tiles = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
 
         # generate the ports
-        self.ports = [
+        self.init_ports = [
             (2, -3, "sheep", -1),
             (0, -3, "None", 0),
             (-2, -1, "stone", 1),
@@ -92,6 +92,8 @@ class BoardGenerator:
         ] * self.options.get_option(
             "More_players"
         )
+
+        self.ports = [PortTile(p[0], p[1], p[2], p[3]) for p in self.init_ports]
 
     def get_neighbours(self, x: int, y: int) -> list[tuple[int, int]]:
         """Return the coordinates of neighboring tiles for a given tile.
@@ -153,11 +155,10 @@ class BoardGenerator:
 
         if self.options.get_option("Balanced_ports"):
             for i, p in enumerate(self.ports):
-                x, y, res, _o = p
-                neighbours = self.get_neighbours(x, y)
+                neighbours = self.get_neighbours(p.x, p.y)
                 # remove resource option from the neighboring tiles
                 for t in [t for t in self.tiles if t.get_coords() in neighbours]:
-                    t.res_options = [tres for tres in t.res_options if tres != res]
+                    t.res_options = [tres for tres in t.res_options if tres != p.ressource]
 
         while not all(t.res_collapsed for t in self.tiles):
 

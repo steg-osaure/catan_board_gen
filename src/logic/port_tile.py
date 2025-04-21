@@ -30,3 +30,5 @@ class PortTile(Tile):
             number (int, optional): The number token value assigned to this tile. Defaults to None.
         """
         super().__init__(x, y)
+        self.ressource = ressource
+        self.number = number

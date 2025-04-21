@@ -29,11 +29,11 @@ class BoardDrawer:
     def convert_coord_to_screen(self, tile_coords: tuple[int, int]) -> tuple[float, float]:
         """Convert hex grid coordinates to screen coordinates for rendering."""
         return (
-            self.offset + self.width // 2 + 2 * self.tile_size * (tile_coords[0] + math.cos(math.pi / 3) * tile_coords[1]),
-            self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * tile_coords[1],
+            self.width // 2 + 2 * self.tile_size * (self.offset_x + tile_coords[0] + math.cos(math.pi / 3) * tile_coords[1]),
+            self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * (self.offset_y + tile_coords[1]),
         )
 
-    def draw(self, board, canvas) -> None:
+    def draw(self, board, canvas, size) -> None:
         """Render the board tiles and ports on the canvas."""
 
         self.board_canvas = canvas
@@ -42,13 +42,24 @@ class BoardDrawer:
         self.board_canvas.context.clear()
 
         # self.width, self.height = self.main_window.size
-        self.width, self.height = 800, 600  # TODO: Placeholder for window size
+        self.width, self.height = size
+        # self.width = int(self.width / self.canvas_prop_size)
+        # self.height = int(self.height / self.canvas_prop_size)
         self.min_size: int = min(self.width, int(self.height * self.canvas_ratio))
 
         # TODO: placeholder using 4 player board size
         # generate these from window size and size of row/columns
-        self.tile_size: int = max(self.min_size - 15, 2) // (12)
-        self.offset = 0
+        all_x = [t.x for t in board["ressources"] + board["ports"]]
+        all_y = [t.y for t in board["ressources"] + board["ports"]]
+        min_x, max_x = min(all_x), max(all_x)
+        min_y, max_y = min(all_y), max(all_y)
+        n_rows = abs(max_y - min_y) + 1
+        n_cols = abs(max_x - min_x) + 1
+        self.offset_x = ((n_cols + 1) % 2) / 2
+        self.offset_y = ((n_rows + 1) % 2) / 2
+        self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 3)
+        # screen_width, screen_height = self.convert_coord_to_screen((n_cols, n_rows))
+        # self.tile_size: int = max(self.min_size - 15, 2) // (12)
 
         self.ports = board["ports"]
         self.tiles = board["ressources"]
@@ -100,34 +111,33 @@ class BoardDrawer:
             with self.board_canvas.Fill(x, y, color=c) as text_filler:
                 text_filler.write_text(str(num), x - w / 2.0, y - h / 2.0, font, Baseline.TOP)
 
-    def draw_port(self, port: tuple[float, float, str, int]) -> None:
+    def draw_port(self, port) -> None:
         """Draw a port on the canvas.
 
         Args:
             port (tuple): Port details (x, y, resource type, orientation).
         """
-        x, y, t, o = port
-        x, y = self.convert_coord_to_screen((x, y))
+        x, y = self.convert_coord_to_screen((port.x, port.y))
 
         with self.board_canvas.Stroke(line_width=2) as stroker:
             stroker.arc(x, y, self.tile_size / 2)
 
-        c = self.color[t]
+        c = self.color[port.ressource]
 
         with self.board_canvas.Stroke(x, y, line_width=2) as stroker:
             stroker.line_to(
-                x + self.tile_size * math.sin(o * math.pi / 3),
-                y + self.tile_size * math.cos(o * math.pi / 3),
+                x + self.tile_size * math.sin(port.number * math.pi / 3),
+                y + self.tile_size * math.cos(port.number * math.pi / 3),
             )
             stroker.move_to(x, y)
             stroker.line_to(
-                x + self.tile_size * math.sin((o + 1) * math.pi / 3),
-                y + self.tile_size * math.cos((o + 1) * math.pi / 3),
+                x + self.tile_size * math.sin((port.number + 1) * math.pi / 3),
+                y + self.tile_size * math.cos((port.number + 1) * math.pi / 3),
             )
         with self.board_canvas.Fill(x, y, color=c) as filler:
             filler.ellipse(x, y, self.tile_size / 2, self.tile_size / 2)
 
-        if t == "None":
+        if port.ressource == "None":
             font = toga.Font(family=SANS_SERIF, size=self.tile_size // 3)
             w, h = self.board_canvas.measure_text("3:1", font)
 

@@ -89,7 +89,7 @@ class CBGenApp(toga.App):
         self.board_gen.set_options(self.options)
         self.current_board = self.board_gen.call()
         # self.board_draw.draw_board(self.current_board, self.board_canvas.style)
-        self.board_draw.draw(self.current_board, self.board_canvas)
+        self.board_draw.draw(self.current_board, self.board_canvas, self.main_window.size)
         # self.draw()
 
     def on_option_switch(self, widget: toga.Widget) -> None:
