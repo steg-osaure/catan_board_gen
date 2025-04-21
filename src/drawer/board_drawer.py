@@ -65,8 +65,8 @@ class BoardDrawer:
                 fill_color=self.color[t.ressource],
             )
 
-        # for p in self.ports:
-        # self.draw_port(p)
+        for p in self.ports:
+            self.draw_port(p)
 
     def draw_hex(self, x: float, y: float, num: int, edge_size: int = 30, fill_color: str = "BLANK") -> None:
         """Draw a hexagonal tile on the canvas.
@@ -107,6 +107,7 @@ class BoardDrawer:
             port (tuple): Port details (x, y, resource type, orientation).
         """
         x, y, t, o = port
+        x, y = self.convert_coord_to_screen((x, y))
 
         with self.board_canvas.Stroke(line_width=2) as stroker:
             stroker.arc(x, y, self.tile_size / 2)
