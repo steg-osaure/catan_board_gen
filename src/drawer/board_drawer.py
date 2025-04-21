@@ -7,6 +7,15 @@ from toga.constants import Baseline
 
 
 class BoardDrawer:
+    color = {
+        "brick": "coral",
+        "wood": "forestgreen",
+        "sheep": "palegreen",
+        "wheat": "gold",
+        "stone": "slategrey",
+        "desert": "peachpuff",
+    }
+
     def __init__(self):
         self.test = "test"
 
@@ -16,34 +25,14 @@ class BoardDrawer:
 
         #
 
-    def convert_coord_to_screen(self) -> None:
+    def convert_coord_to_screen(self, tile_coords: tuple[int, int]) -> tuple[float, float]:
         """Convert hex grid coordinates to screen coordinates for rendering."""
-        # set size of tile based on window size
-        # self.tile_size: int = max(self.min_size - 15, 2) // (12 + 4 * self.options["More_players"])
+        return (
+            self.offset + self.width // 2 + 2 * self.tile_size * (tile_coords[0] + math.cos(math.pi / 3) * tile_coords[1]),
+            self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * tile_coords[1],
+        )
 
-        # offset, to center the board
-        # offset = 0 * ~self.options["More_players"] + self.tile_size * math.cos(math.pi / 6) * self.options["More_players"]
-
-        # convert hex grid coordinates of tiles to screen coordinates
-        self.tile_cart = [
-            (
-                self.offset + self.width // 2 + 2 * self.tile_size * (i[0] + math.cos(math.pi / 3) * i[1]),
-                self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * i[1],
-            )
-            for i in self.tile_centers
-        ]
-
-        self.screen_ports = [
-            (
-                self.offset + self.width // 2 + 2 * self.tile_size * (i[0] + math.cos(math.pi / 3) * i[1]),
-                self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * i[1],
-                i[2],
-                i[3],
-            )
-            for i in self.ports
-        ]
-
-    def draw(self, canvas) -> None:
+    def draw(self, board, canvas) -> None:
         """Render the board tiles and ports on the canvas."""
 
         self.board_canvas = canvas
@@ -59,53 +48,25 @@ class BoardDrawer:
         # generate these from window size and size of row/columns
         self.tile_size: int = max(self.min_size - 15, 2) // (12)
         self.offset = 0
-        self.tile_centers = [
-            (i, j) for j in range(-2 - self.offset, 3 + self.offset) for i in range(max(-2 - j - self.offset, -2 - self.offset), min(3 - j, 3))
-        ]
 
         # TODO: pass these from board generator
-        self.ports = [
-            (2, -3, "sheep", -1),
-            (0, -3, "None", 0),
-            (-2, -1, "stone", 1),
-            (-3, 1, "wheat", 1),
-            (-3, 3, "None", 2),
-            (-1, 3, "wood", -3),
-            (1, 2, "brick", -3),
-            (3, 0, "None", -2),
-            (3, -2, "None", -1),
-        ]
-        self.deck = (
-            (3 + 2 * self.offset) * ["brick"]
-            + (4 + 2 * self.offset) * ["wood"]
-            + (4 + 2 * self.offset) * ["sheep"]
-            + (4 + 2 * self.offset) * ["wheat"]
-            + (3 + 2 * self.offset) * ["stone"]
-            + (1 + 1 * self.offset) * ["desert"]
-        )
-        self.numbers_deck = [2, 12] * (1 + self.offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2 + self.offset) + [7]
+        self.ports = board["ports"]
+        self.tiles = board["ressources"]
 
         # ===
-        self.convert_coord_to_screen()
-        for i, t in enumerate(self.tile_cart):
-            color = {
-                "brick": "coral",
-                "wood": "forestgreen",
-                "sheep": "palegreen",
-                "wheat": "gold",
-                "stone": "slategrey",
-                "desert": "peachpuff",
-            }[self.deck[i]]
+        for i, t in enumerate(self.tiles):
+            screen_x, screen_y = self.convert_coord_to_screen((t.x, t.y))
+
             self.draw_hex(
-                t[0],
-                t[1],
-                self.numbers_deck[i],
+                screen_x,
+                screen_y,
+                t.number,
                 self.tile_size,
-                fill_color=color,
+                fill_color=self.color[t.ressource],
             )
 
-        for p in self.screen_ports:
-            self.draw_port(p)
+        # for p in self.ports:
+        # self.draw_port(p)
 
     def draw_hex(self, x: float, y: float, num: int, edge_size: int = 30, fill_color: str = "BLANK") -> None:
         """Draw a hexagonal tile on the canvas.

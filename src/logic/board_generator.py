@@ -16,6 +16,8 @@ from typing import Any
 class BoardGenerator:
     """Class to handle the generation of Catan boards."""
 
+    ressource_list = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
+
     def __init__(self, options: OptionHandler) -> None:
         """Initialize the application, creating the main window and UI components."""
         #####  Initiate the window and its content  #####
@@ -23,15 +25,16 @@ class BoardGenerator:
 
         # options, for the logic:
         self.options = options
+        self.offset = 0 + 1 * self.options.get_option("More_players")
 
     def set_options(self, options: OptionHandler) -> None:
         self.options = options
+        self.offset = 0 + 1 * self.options.get_option("More_players")
 
     def get_nums(self) -> None:
         """Generate the deck of numbers for the tiles, including handling desert tiles."""
-        offset = 0 + 1 * self.options.get_option("More_players")
         # the deck of numbers to use
-        self.numbers_deck = [2, 12] * (1 + offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2 + offset)
+        self.numbers_deck = [2, 12] * (1 + self.offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2 + self.offset)
 
         # Assign the desert tiles with number 7
         desert_idx = where(self.deck, "desert")
@@ -40,22 +43,22 @@ class BoardGenerator:
 
     def get_tiles(self) -> None:
         """Generate tile data, including resources and coordinates."""
-        offset = 0 + 1 * self.options.get_option("More_players")
 
         # generate the list of used tiles coordinates
-        self.tile_centers = [(i, j) for j in range(-2 - offset, 3 + offset) for i in range(max(-2 - j - offset, -2 - offset), min(3 - j, 3))]
+        self.tile_centers = [
+            (i, j) for j in range(-2 - self.offset, 3 + self.offset) for i in range(max(-2 - j - self.offset, -2 - self.offset), min(3 - j, 3))
+        ]
 
         # list of resources
-        self.ressource_list = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
 
         # the deck of resources to use
         self.deck = (
-            (3 + 2 * offset) * ["brick"]
-            + (4 + 2 * offset) * ["wood"]
-            + (4 + 2 * offset) * ["sheep"]
-            + (4 + 2 * offset) * ["wheat"]
-            + (3 + 2 * offset) * ["stone"]
-            + (1 + 1 * offset) * ["desert"]
+            (3 + 2 * self.offset) * ["brick"]
+            + (4 + 2 * self.offset) * ["wood"]
+            + (4 + 2 * self.offset) * ["sheep"]
+            + (4 + 2 * self.offset) * ["wheat"]
+            + (3 + 2 * self.offset) * ["stone"]
+            + (1 + 1 * self.offset) * ["desert"]
         )
 
         self.get_nums()
@@ -108,13 +111,15 @@ class BoardGenerator:
         # self.get_nums()
         self.shuffle_and_check()
 
+        board = {"ressources": self.tiles, "ports": self.ports}
+
         # self.draw()
         # print(self.numbers_deck)
         # print(self.deck)
         # for t in self.tiles:
         # print(t)
         #    t.Print()
-        return self.tiles
+        return board
 
     def shuffle_and_check(self) -> None:
         """Shuffle the tiles and numbers until a valid board configuration is found."""
