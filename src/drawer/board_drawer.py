@@ -5,6 +5,8 @@ import toga
 from toga.fonts import SANS_SERIF
 from toga.constants import Baseline
 
+from typing import Any
+
 
 class BoardDrawer:
     color = {
@@ -33,6 +35,17 @@ class BoardDrawer:
             self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * (self.offset_y + tile_coords[1]),
         )
 
+    def set_tilesize(self) -> None:
+        all_x = [t.x for t in self.tiles + self.ports]
+        all_y = [t.y for t in self.tiles + self.ports]
+        min_x, max_x = min(all_x), max(all_x)
+        min_y, max_y = min(all_y), max(all_y)
+        n_rows = abs(max_y - min_y) + 1
+        n_cols = abs(max_x - min_x) + 1
+        self.offset_x = ((n_cols + 1) % 2) / 2
+        self.offset_y = ((n_rows + 1) % 2) / 2
+        self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 3)
+
     def draw(self, board, canvas, size) -> None:
         """Render the board tiles and ports on the canvas."""
 
@@ -41,31 +54,14 @@ class BoardDrawer:
         self.canvas_ratio = self.canvas_prop_size / (1 + self.canvas_prop_size)
         self.board_canvas.context.clear()
 
-        # self.width, self.height = self.main_window.size
+        self.tiles, self.ports = board["ressources"], board["ports"]
         self.width, self.height = size
-        # self.width = int(self.width / self.canvas_prop_size)
-        # self.height = int(self.height / self.canvas_prop_size)
+
         self.min_size: int = min(self.width, int(self.height * self.canvas_ratio))
+        self.set_tilesize()
 
-        # TODO: placeholder using 4 player board size
-        # generate these from window size and size of row/columns
-        all_x = [t.x for t in board["ressources"] + board["ports"]]
-        all_y = [t.y for t in board["ressources"] + board["ports"]]
-        min_x, max_x = min(all_x), max(all_x)
-        min_y, max_y = min(all_y), max(all_y)
-        n_rows = abs(max_y - min_y) + 1
-        n_cols = abs(max_x - min_x) + 1
-        self.offset_x = ((n_cols + 1) % 2) / 2
-        self.offset_y = ((n_rows + 1) % 2) / 2
-        self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 3)
-        # screen_width, screen_height = self.convert_coord_to_screen((n_cols, n_rows))
-        # self.tile_size: int = max(self.min_size - 15, 2) // (12)
-
-        self.ports = board["ports"]
-        self.tiles = board["ressources"]
-
-        # ===
-        for i, t in enumerate(self.tiles):
+        # Draw all tiles:
+        for t in self.tiles:
             screen_x, screen_y = self.convert_coord_to_screen((t.x, t.y))
 
             self.draw_hex(

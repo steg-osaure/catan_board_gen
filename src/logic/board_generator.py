@@ -1,6 +1,5 @@
 """Module containing the CatanBoardGenerator class."""
 
-import math
 import random as r
 
 
@@ -17,15 +16,13 @@ class BoardGenerator:
     """Class to handle the generation of Catan boards."""
 
     ressource_list = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
+    relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
     def __init__(self, options: OptionHandler) -> None:
         """Initialize the application, creating the main window and UI components."""
-        #####  Initiate the window and its content  #####
-        self.relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
         # options, for the logic:
-        self.options = options
-        self.offset = 0 + 1 * self.options.get_option("More_players")
+        self.set_options(options)
 
     def set_options(self, options: OptionHandler) -> None:
         self.options = options
@@ -34,7 +31,12 @@ class BoardGenerator:
     def get_nums(self) -> None:
         """Generate the deck of numbers for the tiles, including handling desert tiles."""
         # the deck of numbers to use
-        self.numbers_deck = [2, 12] * (1 + self.offset) + [3, 4, 5, 6, 8, 9, 10, 11] * (2 + self.offset)
+        self.numbers_deck = {
+            # Setup for 3/4 players
+            False: [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12],
+            # Setup for 5/6 players
+            True: [2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12],
+        }[self.options.get_option("More_players")]
 
         # Assign the desert tiles with number 7
         desert_idx = where(self.deck, "desert")
