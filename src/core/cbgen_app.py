@@ -8,8 +8,6 @@ from typing import Any
 from logic import BoardGenerator
 from drawer.board_drawer import BoardDrawer
 
-# from gui.cb_gui import CBGui
-
 from .option_handler import OptionHandler
 
 

@@ -14,10 +14,11 @@ class BoardDrawer:
         "wheat": "gold",
         "stone": "slategrey",
         "desert": "peachpuff",
+        "None": "white",
     }
 
     def __init__(self):
-        self.test = "test"
+        pass
 
     def draw_board(self, board, size):
         print(board)
@@ -41,7 +42,7 @@ class BoardDrawer:
         self.board_canvas.context.clear()
 
         # self.width, self.height = self.main_window.size
-        self.width, self.height = 800, 600  # Placeholder for window size
+        self.width, self.height = 800, 600  # TODO: Placeholder for window size
         self.min_size: int = min(self.width, int(self.height * self.canvas_ratio))
 
         # TODO: placeholder using 4 player board size
@@ -49,7 +50,6 @@ class BoardDrawer:
         self.tile_size: int = max(self.min_size - 15, 2) // (12)
         self.offset = 0
 
-        # TODO: pass these from board generator
         self.ports = board["ports"]
         self.tiles = board["ressources"]
 
@@ -112,14 +112,7 @@ class BoardDrawer:
         with self.board_canvas.Stroke(line_width=2) as stroker:
             stroker.arc(x, y, self.tile_size / 2)
 
-        c = {
-            "brick": "coral",
-            "wood": "forestgreen",
-            "sheep": "palegreen",
-            "wheat": "gold",
-            "stone": "slategrey",
-            "None": "white",
-        }[t]
+        c = self.color[t]
 
         with self.board_canvas.Stroke(x, y, line_width=2) as stroker:
             stroker.line_to(

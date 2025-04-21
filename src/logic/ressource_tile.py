@@ -18,16 +18,6 @@ class RessourceTile(Tile):
         res_options (list): Possible resource types for the tile.
     """
 
-    # the possible colors, matching the ressource type
-    colors = {
-        "brick": "coral",
-        "wood": "forestgreen",
-        "sheep": "palegreen",
-        "wheat": "gold",
-        "stone": "slategrey",
-        "desert": "peachpuff",
-    }
-
     def __init__(self, x: int = 0, y: int = 0, ressource: str = "desert", number: int = None):
         """Initialize a Tile instance.
 
