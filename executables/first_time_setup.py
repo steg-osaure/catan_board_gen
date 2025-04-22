@@ -32,11 +32,7 @@ class EnvironmentSetup:
 
     def create_default_config(self) -> None:
         """Create a default configuration file for the user."""
-        shell = (
-            "sh"
-            if (pwd.getpwuid(os.getuid()).pw_shell.split("/")[-1] in ["bash", "zsh"])
-            else "csh"
-        )
+        shell = "sh" if (pwd.getpwuid(os.getuid()).pw_shell.split("/")[-1] in ["bash", "zsh"]) else "csh"
         cbgen_path = os.getcwd()
 
         try:
@@ -87,7 +83,7 @@ class EnvironmentSetup:
             "# Path for catan_board_gen environment",
             f"{action} CBGEN_PATH{sep}{os.getcwd()}",
             f"{action} PATH{sep}${{CBGEN_PATH}}/executables:${{PATH}}",
-            f"{action} PYTHONPATH{sep}${{CBGEN_PATH}}:${{PYTHONPATH}}",
+            f"{action} PYTHONPATH{sep}${{CBGEN_PATH}}/src:${{CBGEN_PATH}}:${{PYTHONPATH}}",
             "",
             "# Path for beeware environment",
             f"{action} PATH{sep}${{CBGEN_PATH}}/beeware/bin:${{PATH}}",
@@ -187,9 +183,7 @@ def main() -> None:
     with subprocess.Popen("chmod a+x setup_environment.sh", shell=True) as process:
         process.wait()
 
-    print(
-        "INFO:: catan_board_gen setup completed. Use `source setup_environment.sh` to initialize the environment."
-    )
+    print("INFO:: catan_board_gen setup completed. Use `source setup_environment.sh` to initialize the environment.")
 
 
 if __name__ == "__main__":
