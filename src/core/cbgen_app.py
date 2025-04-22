@@ -89,7 +89,7 @@ class CBGenApp(toga.App):
         self.board_gen.set_options(self.options)
         self.current_board = self.board_gen.call()
         # self.board_draw.draw_board(self.current_board, self.board_canvas.style)
-        self.board_draw.draw(self.current_board, self.board_canvas, self.main_window.size)
+        self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
         # self.draw()
 
     def on_option_switch(self, widget: toga.Widget) -> None:
@@ -135,6 +135,7 @@ class CBGenApp(toga.App):
         # create the canvas
         self.board_canvas = toga.Canvas(
             style=Pack(flex=self.canvas_prop_size),
+            on_resize=self.on_board_canvas_resize,
         )
 
         # Buttons to get a description of what the options do
@@ -195,3 +196,12 @@ class CBGenApp(toga.App):
             ),
             horizontal=False,
         )
+
+    def on_board_canvas_resize(self, widget: toga.Widget, width: int, height: int, **kwargs: Any) -> None:
+        """Handle the resize event of the board canvas.
+
+        Args:
+            widget (toga.Widget): The widget that triggered the event.
+            **kwargs: Additional arguments passed by the Toga framework.
+        """
+        self.board_canvas_size = width, height

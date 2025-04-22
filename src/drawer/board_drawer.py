@@ -32,7 +32,7 @@ class BoardDrawer:
         """Convert hex grid coordinates to screen coordinates for rendering."""
         return (
             self.width // 2 + 2 * self.tile_size * (self.offset_x + tile_coords[0] + math.cos(math.pi / 3) * tile_coords[1]),
-            self.height * self.canvas_ratio / 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * (self.offset_y + tile_coords[1]),
+            self.height // 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * (self.offset_y + tile_coords[1]),
         )
 
     def set_tilesize(self) -> None:
@@ -44,20 +44,18 @@ class BoardDrawer:
         n_cols = abs(max_x - min_x) + 1
         self.offset_x = ((n_cols + 1) % 2) / 2
         self.offset_y = ((n_rows + 1) % 2) / 2
-        self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 3)
+        self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 2)
 
     def draw(self, board, canvas, size) -> None:
         """Render the board tiles and ports on the canvas."""
 
         self.board_canvas = canvas
-        self.canvas_prop_size = self.board_canvas.style.flex
-        self.canvas_ratio = self.canvas_prop_size / (1 + self.canvas_prop_size)
         self.board_canvas.context.clear()
 
         self.tiles, self.ports = board["ressources"], board["ports"]
         self.width, self.height = size
 
-        self.min_size: int = min(self.width, int(self.height * self.canvas_ratio))
+        self.min_size: int = min(self.width, self.height)
         self.set_tilesize()
 
         # Draw all tiles:
