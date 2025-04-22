@@ -1,8 +1,5 @@
 """Module containing the Tile class."""
 
-from abc import abstractmethod
-import random as r
-
 
 class Tile:
     """Represents a single tile on the Catan board.

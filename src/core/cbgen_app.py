@@ -2,6 +2,9 @@
 
 import toga
 from toga.style import Pack
+from toga.paths import Paths
+
+from pathlib import Path
 
 from typing import Any
 
@@ -17,7 +20,7 @@ class CBGenApp(toga.App):
     def startup(self) -> None:
         """Initialize the application, creating the main window and UI components."""
 
-        self.options = OptionHandler()
+        self.options = OptionHandler(self.paths.app / "default_options.json")
         self.board_gen = BoardGenerator(self.options)
         self.board_draw = BoardDrawer()
         #####  Initiate the window and its content  #####

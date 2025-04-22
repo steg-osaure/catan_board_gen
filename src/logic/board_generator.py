@@ -324,7 +324,8 @@ class BoardGenerator:
                     # if a ressource gets both 6 and 8, but another ressource already has either one,
                     # the other needs to get remove from its options
                     # if ress_has_two68:
-                    #     for ress_to_fix in [res for res in self.ressource_list if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1]:
+                    #     for ress_to_fix in [res for res in self.ressource_list
+                    #           if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1]:
                     #         t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
                     #         n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
                     #         other_n_res = 6 * (n_col == 8) + 8 * (n_col == 6)

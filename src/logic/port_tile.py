@@ -1,8 +1,6 @@
 """Module containing the Tile class."""
 
-import random as r
 from logic.tile import Tile
-from typing import Optional
 
 
 class PortTile(Tile):
@@ -24,11 +22,11 @@ class PortTile(Tile):
         """Initialize a Tile instance.
 
         Args:
-            x (int, optional): The x-coordinate of the tile in hex grid space. Defaults to 0.
-            y (int, optional): The y-coordinate of the tile in hex grid space. Defaults to 0.
-            ressource (str, optional): The type of resource the tile represents.\
+            x (int): The x-coordinate of the tile in hex grid space. Defaults to 0.
+            y (int): The y-coordinate of the tile in hex grid space. Defaults to 0.
+            ressource (str): The type of resource the tile represents.\
                 Defaults to "desert".
-            number (int, optional): The number token value assigned to this tile. Defaults to None.
+            number (int): The number token value assigned to this tile. Defaults to None.
         """
         super().__init__(x, y)
         self.ressource = ressource

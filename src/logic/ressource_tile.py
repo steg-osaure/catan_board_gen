@@ -2,7 +2,6 @@
 
 import random as r
 from logic.tile import Tile
-from typing import Optional
 
 
 class RessourceTile(Tile):
@@ -23,11 +22,11 @@ class RessourceTile(Tile):
         """Initialize a Tile instance.
 
         Args:
-            x (int, optional): The x-coordinate of the tile in hex grid space. Defaults to 0.
-            y (int, optional): The y-coordinate of the tile in hex grid space. Defaults to 0.
-            ressource (str, optional): The type of resource the tile represents.\
+            x (int): The x-coordinate of the tile in hex grid space. Defaults to 0.
+            y (int): The y-coordinate of the tile in hex grid space. Defaults to 0.
+            ressource (str): The type of resource the tile represents.\
                 Defaults to "desert".
-            number (int, optional): The number token value assigned to this tile. Defaults to None.
+            number (int): The number token value assigned to this tile. Defaults to None.
         """
         # store x, y (hex coordinates)
         super().__init__(x, y)
@@ -46,7 +45,7 @@ class RessourceTile(Tile):
         self.res_collapsed = False
         self.res_options: list[str] = []
 
-    def num_collapse(self, num: Optional[int] = None) -> None:
+    def num_collapse(self, num: int | None = None) -> None:
         """Assign a number token to the tile using Wave Function Collapse.
 
         If a specific number is provided, it is directly assigned. Otherwise,
@@ -71,7 +70,7 @@ class RessourceTile(Tile):
         self.number = self.num_options[0]
         self.num_collapsed = True
 
-    def res_collapse(self, res: Optional[str] = None) -> None:
+    def res_collapse(self, res: str | None = None) -> None:
         """Assign a resource type to the tile using Wave Function Collapse.
 
         If a specific resource is provided, it is directly assigned. Otherwise,
@@ -96,7 +95,7 @@ class RessourceTile(Tile):
         self.ressource = self.res_options[0]
         self.res_collapsed = True
 
-    def Print(self) -> None:
+    def print_info(self) -> None:
         """Print the tile's details.
 
         Returns:

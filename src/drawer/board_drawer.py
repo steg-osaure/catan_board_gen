@@ -11,6 +11,8 @@ from logic.port_tile import PortTile
 
 
 class BoardDrawer:
+    """Class to handle the drawing of the Catan board."""
+
     color = {
         "brick": "coral",
         "wood": "forestgreen",
