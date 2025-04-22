@@ -1,12 +1,12 @@
 import math
 
-import toga
+from typing import Any
 
+import toga
 from toga.fonts import SANS_SERIF
 from toga.constants import Baseline
 
-from typing import Any
-
+from logic.ressource_tile import RessourceTile
 from logic.port_tile import PortTile
 
 
@@ -24,7 +24,13 @@ class BoardDrawer:
     }
 
     def __init__(self) -> None:
-        pass
+        self.offset_x: float = 0
+        self.offset_y: float = 0
+        self.tile_size: int = 0
+        self.board_canvas: toga.Canvas
+        self.tiles: list[RessourceTile] = []
+        self.ports: list[PortTile] = []
+        self.width, self.height = 0, 0
 
     def convert_coord_to_screen(self, tile_coords: tuple[int, int]) -> tuple[float, float]:
         """Convert hex grid coordinates to screen coordinates for rendering."""
@@ -40,9 +46,9 @@ class BoardDrawer:
         min_y, max_y = min(all_y), max(all_y)
         n_rows = abs(max_y - min_y) + 1
         n_cols = abs(max_x - min_x) + 1
-        self.offset_x: float = ((n_cols + 1) % 2) / 2
-        self.offset_y: float = ((n_rows + 1) % 2) / 2
-        self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 2)
+        self.offset_x = ((n_cols + 1) % 2) / 2
+        self.offset_y = ((n_rows + 1) % 2) / 2
+        self.tile_size = int(min(self.width / n_cols, self.height / n_rows) / 2)
 
     def draw(self, board: dict[str, Any], canvas: toga.Canvas, size: tuple[int, int]) -> None:
         """Render the board tiles and ports on the canvas."""
@@ -53,7 +59,6 @@ class BoardDrawer:
         self.tiles, self.ports = board["ressources"], board["ports"]
         self.width, self.height = size
 
-        self.min_size: int = min(self.width, self.height)
         self.set_tilesize()
 
         # Draw all tiles:

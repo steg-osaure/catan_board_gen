@@ -1,21 +1,33 @@
 """Module in charge of handleing the main application."""
 
+from typing import Any
+
 import toga
 from toga.style import Pack
-from toga.paths import Paths
-
-from pathlib import Path
-
-from typing import Any
 
 from logic.board_generator import BoardGenerator
 from drawer.board_drawer import BoardDrawer
-
 from .option_handler import OptionHandler
 
 
 class CBGenApp(toga.App):
     """Core application class."""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.options: OptionHandler
+        self.board_gen: BoardGenerator
+        self.board_draw: BoardDrawer
+        self.current_board: dict[str, Any]
+        self.board_canvas: toga.Canvas
+        self.description_buttons: list[toga.Button]
+        self.switches: list[toga.Switch]
+        self.switch_boxes: list[toga.Box]
+        self.generate_button: toga.Button
+        self.switch_box: toga.Box
+        self.switch_scroll: toga.ScrollContainer
+        self.board_canvas_size: tuple[int, int] = (0, 0)
 
     def startup(self) -> None:
         """Initialize the application, creating the main window and UI components."""
@@ -26,46 +38,15 @@ class CBGenApp(toga.App):
         #####  Initiate the window and its content  #####
 
         self.main_window = toga.MainWindow(title=self.formal_name)
-        self.prompted_warning = False
 
         # initiate all the widgets
         # create and show the window
         self.create_widgets()
         self.initialize_window()
-        """
-        main_box = toga.Box(
-            style=Pack(
-                direction="column",
-                padding_top=5,
-                padding_right=5,
-                padding_bottom=5,
-                padding_left=5,
-            ),
-        )
-
-        box = toga.Box(
-            style=Pack(
-                direction="column",
-                padding_top=5,
-                padding_right=5,
-                padding_bottom=5,
-                padding_left=5,
-            ),
-        )
-        test_image = toga.Image("../catanboardgen/resources/catanboardgen.png")
-        self.imview = toga.ImageView(test_image, style=Pack(width=1000))
-        box.add(self.imview)
-
-        self.scroll = toga.ScrollContainer(content=box, id="scroll_content")
-        self.zoom_button = toga.Button(text="Zoom", on_press=self.zoom)
-        main_box.add(self.scroll)
-        main_box.add(self.zoom_button)
-        self.main_window.content = main_box
-        """
 
         self.main_window.show()
 
-    def zoom(self, widget: toga.Widget) -> None:
+    def zoom(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         # self.imview.style.width = 500
         pass
 
@@ -88,7 +69,7 @@ class CBGenApp(toga.App):
         # put box in window
         self.main_window.content = main_box
 
-    def generate_pressed(self, widget: toga.Widget) -> None:
+    def generate_pressed(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         """Handler for the generate board button press event."""
         self.board_gen.set_options(self.options)
         self.current_board = self.board_gen.call()
@@ -96,7 +77,7 @@ class CBGenApp(toga.App):
         self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
         # self.draw()
 
-    def on_option_switch(self, widget: toga.Widget) -> None:
+    def on_option_switch(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         """Handle changes to toggle switches in the UI.
 
         Updates the application's options based on the state of the switch widget.
@@ -107,7 +88,7 @@ class CBGenApp(toga.App):
 
         self.options.set_option(widget.id.replace("_switch", ""), widget.value)
 
-    def show_description(self, widget: toga.Widget, **kwargs: Any) -> None:
+    def show_description(self, widget: toga.Widget, **kwargs: Any) -> None:  # pylint: disable=unused-argument
         """Display a description dialog for the selected option.
 
         The dialog shows information about what the option does.
@@ -132,13 +113,9 @@ class CBGenApp(toga.App):
 
         # Canvas:
 
-        # set proportions relative to the screen height
-        self.canvas_prop_size = 1.8
-        self.canvas_ratio = self.canvas_prop_size / (1 + self.canvas_prop_size)
-
         # create the canvas
         self.board_canvas = toga.Canvas(
-            style=Pack(flex=self.canvas_prop_size),
+            style=Pack(flex=1.8),
             on_resize=self.on_board_canvas_resize,
         )
 
@@ -201,7 +178,7 @@ class CBGenApp(toga.App):
             horizontal=False,
         )
 
-    def on_board_canvas_resize(self, widget: toga.Widget, width: int, height: int, **kwargs: Any) -> None:
+    def on_board_canvas_resize(self, widget: toga.Widget, width: int, height: int, **kwargs: Any) -> None:  # pylint: disable=unused-argument
         """Handle the resize event of the board canvas.
 
         Args:

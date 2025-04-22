@@ -21,6 +21,14 @@ class BoardGenerator:
 
     def __init__(self, options: OptionHandler) -> None:
         """Initialize the application, creating the main window and UI components."""
+        self.numbers_deck: list[int] = []
+        self.tile_centers: list[tuple[int, int]] = []
+        self.deck: list[str] = []
+        self.tiles: list[RessourceTile] = []
+        self.init_ports: list[tuple[int, int, str, int]] = []
+        self.ports: list[PortTile] = []
+        self.board_res_options: list[str] = []
+        self.board_num_options: list[int] = []
 
         # options, for the logic:
         self.set_options(options)
@@ -67,7 +75,7 @@ class BoardGenerator:
         self.get_nums()
 
         # Generate the tiles
-        self.tiles: list[RessourceTile] = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
+        self.tiles = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
 
         # generate the ports
         self.init_ports = [
@@ -96,7 +104,7 @@ class BoardGenerator:
             "More_players"
         )
 
-        self.ports: list[PortTile] = [PortTile(x, y, res, orientation) for x, y, res, orientation in self.init_ports]
+        self.ports = [PortTile(x, y, res, orientation) for x, y, res, orientation in self.init_ports]
 
     def get_neighbours(self, x: int, y: int) -> list[tuple[int, int]]:
         """Return the coordinates of neighboring tiles for a given tile.
