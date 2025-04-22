@@ -3,6 +3,7 @@
 import random as r
 
 
+from logic.tile import Tile
 from logic.ressource_tile import RessourceTile
 from logic.port_tile import PortTile
 from logic.utils import where
@@ -66,7 +67,7 @@ class BoardGenerator:
         self.get_nums()
 
         # Generate the tiles
-        self.tiles = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
+        self.tiles: list[RessourceTile] = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
 
         # generate the ports
         self.init_ports = [
@@ -95,7 +96,7 @@ class BoardGenerator:
             "More_players"
         )
 
-        self.ports = [PortTile(p[0], p[1], p[2], p[3]) for p in self.init_ports]
+        self.ports: list[PortTile] = [PortTile(x, y, res, orientation) for x, y, res, orientation in self.init_ports]
 
     def get_neighbours(self, x: int, y: int) -> list[tuple[int, int]]:
         """Return the coordinates of neighboring tiles for a given tile.
@@ -109,7 +110,7 @@ class BoardGenerator:
         """
         return [(i[0] + x, i[1] + y) for i in self.relative_neighbours]
 
-    def call(self) -> None:
+    def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
         self.get_tiles()
         # self.get_nums()
@@ -390,7 +391,7 @@ class BoardGenerator:
 
         valid = [True] * len(self.ports)
         for i, p in enumerate(self.ports):
-            x, y, r, _o = p
+            x, y, r, _o = p.x, p.y, p.ressource, p.orientation
             neighbours = self.get_neighbours(x, y)
             same_type_neighbours = [t.get_coords() for t in self.tiles if t.get_coords() in neighbours and t.ressource == r]
             valid[i] = valid[i] & (len(same_type_neighbours) == 0)

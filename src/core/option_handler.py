@@ -1,6 +1,7 @@
 """Method containing the class to store the different option settings"""
 
 # import json
+from typing import Any
 
 default_options = {
     "More_players": {"default": False, "box_text": "5/6 players", "description": "Bigger board for games up to 6 players"},
@@ -26,17 +27,17 @@ default_options = {
 class OptionHandler:
     """Class to handle the options for the script"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the option handler with default values"""
 
         # with open("default_options.json") as option_json:
         #    self.options = option_json.load()
-        self.options = default_options
+        self.options: dict[str, Any] = default_options
 
         for key in self.options.keys():
             self.options[key].update({"value": self.options[key]["default"]})
 
-    def get_option(self, key: str) -> None:
+    def get_option(self, key: str) -> bool:
         """Get the value of a specific option"""
         return self.options[key]["value"]
 
@@ -48,9 +49,9 @@ class OptionHandler:
         """Toggle the value of a specific option"""
         self.options[key]["value"] = not self.options[key]["value"]
 
-    def get_all(self) -> dict[str, bool]:
+    def get_all(self) -> list[str]:
         # return {key: self.options[key]["value"] for key in self.options.keys()}
-        return self.options.keys()
+        return list(self.options.keys())
 
     def get_box_text(self, key: str) -> str:
         """Get the text for the box"""

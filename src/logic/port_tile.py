@@ -2,6 +2,7 @@
 
 import random as r
 from logic.tile import Tile
+from typing import Optional
 
 
 class PortTile(Tile):
@@ -19,7 +20,7 @@ class PortTile(Tile):
         res_options (list): Possible resource types for the tile.
     """
 
-    def __init__(self, x: int = 0, y: int = 0, ressource: str = "desert", number: int = None):
+    def __init__(self, x: int, y: int, ressource: str, orientation: int) -> None:
         """Initialize a Tile instance.
 
         Args:
@@ -31,4 +32,4 @@ class PortTile(Tile):
         """
         super().__init__(x, y)
         self.ressource = ressource
-        self.number = number
+        self.orientation = orientation

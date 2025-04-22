@@ -26,12 +26,12 @@ class Tile:
     #    (2 / 3, -1 / 3),
     # ]
 
-    def __init__(self, x: int = 0, y: int = 0) -> None:
+    def __init__(self, x: int, y: int) -> None:
         """Initialize a Tile instance.
 
         Args:
-            x (int, optional): The x-coordinate of the tile in hex grid space. Defaults to 0.
-            y (int, optional): The y-coordinate of the tile in hex grid space. Defaults to 0.
+            x (int): The x-coordinate of the tile in hex grid space.
+            y (int): The y-coordinate of the tile in hex grid space.
         """
 
         # store x, y (hex coordinates)
@@ -51,11 +51,3 @@ class Tile:
         """
 
         return [(i[0] + self.x, i[1] + self.y) for i in self.relative_neighbours]
-
-    @abstractmethod
-    def draw(self) -> None:
-        """Draw the tile on the canvas.
-
-        This method should be implemented by subclasses to define how the tile is rendered.
-        """
-        pass

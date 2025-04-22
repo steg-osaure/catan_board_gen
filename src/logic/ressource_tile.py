@@ -2,6 +2,7 @@
 
 import random as r
 from logic.tile import Tile
+from typing import Optional
 
 
 class RessourceTile(Tile):
@@ -18,7 +19,7 @@ class RessourceTile(Tile):
         res_options (list): Possible resource types for the tile.
     """
 
-    def __init__(self, x: int = 0, y: int = 0, ressource: str = "desert", number: int = None):
+    def __init__(self, x: int, y: int, ressource: str, number: int) -> None:
         """Initialize a Tile instance.
 
         Args:
@@ -43,9 +44,9 @@ class RessourceTile(Tile):
 
         # info for WFC for ressources
         self.res_collapsed = False
-        self.res_options = []
+        self.res_options: list[str] = []
 
-    def num_collapse(self, num=None):
+    def num_collapse(self, num: Optional[int] = None) -> None:
         """Assign a number token to the tile using Wave Function Collapse.
 
         If a specific number is provided, it is directly assigned. Otherwise,
@@ -64,14 +65,13 @@ class RessourceTile(Tile):
             self.number = num
             self.num_options = []
             self.num_collapsed = True
-            return True
+            return
 
         r.shuffle(self.num_options)
         self.number = self.num_options[0]
         self.num_collapsed = True
-        return True
 
-    def res_collapse(self, res=None):
+    def res_collapse(self, res: Optional[str] = None) -> None:
         """Assign a resource type to the tile using Wave Function Collapse.
 
         If a specific resource is provided, it is directly assigned. Otherwise,
@@ -90,14 +90,13 @@ class RessourceTile(Tile):
             self.ressource = res
             self.res_options = []
             self.res_collapsed = True
-            return True
+            return
 
         r.shuffle(self.res_options)
         self.ressource = self.res_options[0]
         self.res_collapsed = True
-        return True
 
-    def Print(self):
+    def Print(self) -> None:
         """Print the tile's details.
 
         Returns:

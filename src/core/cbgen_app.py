@@ -5,7 +5,7 @@ from toga.style import Pack
 
 from typing import Any
 
-from logic import BoardGenerator
+from logic.board_generator import BoardGenerator
 from drawer.board_drawer import BoardDrawer
 
 from .option_handler import OptionHandler
@@ -63,7 +63,8 @@ class CBGenApp(toga.App):
         self.main_window.show()
 
     def zoom(self, widget: toga.Widget) -> None:
-        self.imview.style.width = 500
+        # self.imview.style.width = 500
+        pass
 
     def initialize_window(self) -> None:
         # put them in a box

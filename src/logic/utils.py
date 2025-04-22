@@ -1,7 +1,9 @@
 """Module containing miscellaneous utilities."""
 
+from typing import Any
 
-def where(l, element):
+
+def where(l: list[Any], element: Any) -> list[int]:
     """Find the indices of all occurrences of an element in a list.
 
     Args:

@@ -7,6 +7,8 @@ from toga.constants import Baseline
 
 from typing import Any
 
+from logic.port_tile import PortTile
+
 
 class BoardDrawer:
     color = {
@@ -19,14 +21,8 @@ class BoardDrawer:
         "None": "white",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
-
-    def draw_board(self, board, size):
-        print(board)
-        print(size)
-
-        #
 
     def convert_coord_to_screen(self, tile_coords: tuple[int, int]) -> tuple[float, float]:
         """Convert hex grid coordinates to screen coordinates for rendering."""
@@ -42,11 +38,11 @@ class BoardDrawer:
         min_y, max_y = min(all_y), max(all_y)
         n_rows = abs(max_y - min_y) + 1
         n_cols = abs(max_x - min_x) + 1
-        self.offset_x = ((n_cols + 1) % 2) / 2
-        self.offset_y = ((n_rows + 1) % 2) / 2
+        self.offset_x: float = ((n_cols + 1) % 2) / 2
+        self.offset_y: float = ((n_rows + 1) % 2) / 2
         self.tile_size: int = int(min(self.width / n_cols, self.height / n_rows) / 2)
 
-    def draw(self, board, canvas, size) -> None:
+    def draw(self, board: dict[str, Any], canvas: toga.Canvas, size: tuple[int, int]) -> None:
         """Render the board tiles and ports on the canvas."""
 
         self.board_canvas = canvas
@@ -105,7 +101,7 @@ class BoardDrawer:
             with self.board_canvas.Fill(x, y, color=c) as text_filler:
                 text_filler.write_text(str(num), x - w / 2.0, y - h / 2.0, font, Baseline.TOP)
 
-    def draw_port(self, port) -> None:
+    def draw_port(self, port: PortTile) -> None:
         """Draw a port on the canvas.
 
         Args:
@@ -120,13 +116,13 @@ class BoardDrawer:
 
         with self.board_canvas.Stroke(x, y, line_width=2) as stroker:
             stroker.line_to(
-                x + self.tile_size * math.sin(port.number * math.pi / 3),
-                y + self.tile_size * math.cos(port.number * math.pi / 3),
+                x + self.tile_size * math.sin(port.orientation * math.pi / 3),
+                y + self.tile_size * math.cos(port.orientation * math.pi / 3),
             )
             stroker.move_to(x, y)
             stroker.line_to(
-                x + self.tile_size * math.sin((port.number + 1) * math.pi / 3),
-                y + self.tile_size * math.cos((port.number + 1) * math.pi / 3),
+                x + self.tile_size * math.sin((port.orientation + 1) * math.pi / 3),
+                y + self.tile_size * math.cos((port.orientation + 1) * math.pi / 3),
             )
         with self.board_canvas.Fill(x, y, color=c) as filler:
             filler.ellipse(x, y, self.tile_size / 2, self.tile_size / 2)
