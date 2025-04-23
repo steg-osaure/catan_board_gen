@@ -16,14 +16,14 @@ from typing import Any
 class BoardGenerator:
     """Class to handle the generation of Catan boards."""
 
-    ressource_list = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
-    relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+    ressource_list: list[str] = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
+    relative_neighbours: list[tuple[int, int]] = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
     def __init__(self, options: OptionHandler) -> None:
         """Initialize the application, creating the main window and UI components."""
         self.numbers_deck: list[int] = []
-        self.tile_centers: list[tuple[int, int]] = []
-        self.deck: list[str] = []
+        self.centers_deck: list[tuple[int, int]] = []
+        self.ressource_deck: list[str] = []
         self.tiles: list[RessourceTile] = []
         self.init_ports: list[tuple[int, int, str, int]] = []
         self.ports: list[PortTile] = []
@@ -36,75 +36,83 @@ class BoardGenerator:
     def set_options(self, options: OptionHandler) -> None:
         self.options = options
         self.offset = 0 + 1 * self.options.get_option("More_players")
+        self.more_players = self.options.get_option("More_players")
 
-    def get_nums(self) -> None:
+    def get_numbers(self) -> None:
         """Generate the deck of numbers for the tiles, including handling desert tiles."""
         # the deck of numbers to use
-        self.numbers_deck = {
-            # Setup for 3/4 players
-            False: [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12],
-            # Setup for 5/6 players
-            True: [2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12],
-        }[self.options.get_option("More_players")]
+        n_commun = 2 + self.offset
+        n_rare = 1 + self.offset
+        self.numbers_deck = [2, 12] * n_rare + [i for i in range(3, 12) if i != 7] * n_commun
 
+        self.assign_desert()
+
+    def assign_desert(self) -> None:
         # Assign the desert tiles with number 7
-        desert_idx = where(self.deck, "desert")
+        desert_idx = where(self.ressource_deck, "desert")
+        # loop backwards to avoid index issues
         for i in desert_idx[::-1]:
             self.numbers_deck.insert(i, 7)
 
-    def get_tiles(self) -> None:
+    def get_centers(self) -> None:
         """Generate tile data, including resources and coordinates."""
 
         # generate the list of used tiles coordinates
-        self.tile_centers = [
-            (i, j) for j in range(-2 - self.offset, 3 + self.offset) for i in range(max(-2 - j - self.offset, -2 - self.offset), min(3 - j, 3))
-        ]
+        column_range = range(-2 - self.offset, 3 + self.offset)
+        row_ranges = {j: range(max(-2 - j - self.offset, -2 - self.offset), min(3 - j, 3)) for j in column_range}
+        self.centers_deck = [{"x": i, "y": j} for j in column_range for i in row_ranges[j]]
 
-        # list of resources
-
+    def get_ressources(self) -> None:
         # the deck of resources to use
-        self.deck = (
-            (3 + 2 * self.offset) * ["brick"]
-            + (4 + 2 * self.offset) * ["wood"]
-            + (4 + 2 * self.offset) * ["sheep"]
-            + (4 + 2 * self.offset) * ["wheat"]
-            + (3 + 2 * self.offset) * ["stone"]
-            + (1 + 1 * self.offset) * ["desert"]
-        )
+        n_desert = 1 + self.offset
+        n_inorganic = 3 + 2 * self.offset
+        n_organic = 4 + 2 * self.offset
 
-        self.get_nums()
+        self.ressource_deck = n_inorganic * ["brick", "stone"] + n_organic * ["wood", "sheep", "wheat"] + n_desert * ["desert"]
+
+    def get_ressource_tiles(self) -> None:
+
+        self.get_centers()
+        self.get_ressources()
+        self.get_numbers()
 
         # Generate the tiles
-        self.tiles = [RessourceTile(c[0], c[1], t, n) for (t, c, n) in zip(self.deck, self.tile_centers, self.numbers_deck)]
+        self.tiles = [
+            RessourceTile(coord["x"], coord["y"], ressource, number)
+            for (coord, ressource, number) in zip(self.centers_deck, self.ressource_deck, self.numbers_deck)
+        ]
+
+    def get_port_tiles(self) -> None:
 
         # generate the ports
-        self.init_ports = [
-            (2, -3, "sheep", -1),
-            (0, -3, "None", 0),
-            (-2, -1, "stone", 1),
-            (-3, 1, "wheat", 1),
-            (-3, 3, "None", 2),
-            (-1, 3, "wood", -3),
-            (1, 2, "brick", -3),
-            (3, 0, "None", -2),
-            (3, -2, "None", -1),
-        ] * (not self.options.get_option("More_players")) + [
-            (2, -4, "sheep", -1),
-            (0, -4, "None", 0),
-            (-3, -1, "stone", 1),
-            (-4, 1, "None", 2),
-            (-4, 2, "wheat", 1),
-            (-4, 4, "None", 2),
-            (-2, 4, "wood", -3),
-            (0, 3, "sheep", -2),
-            (1, 2, "brick", -3),
-            (3, 0, "None", -2),
-            (3, -2, "None", -1),
-        ] * self.options.get_option(
-            "More_players"
-        )
+        self.init_ports = {
+            False: [
+                (2, -3, "sheep", -1),
+                (0, -3, "None", 0),
+                (-2, -1, "stone", 1),
+                (-3, 1, "wheat", 1),
+                (-3, 3, "None", 2),
+                (-1, 3, "wood", -3),
+                (1, 2, "brick", -3),
+                (3, 0, "None", -2),
+                (3, -2, "None", -1),
+            ],
+            True: [
+                (2, -4, "sheep", -1),
+                (0, -4, "None", 0),
+                (-3, -1, "stone", 1),
+                (-4, 1, "None", 2),
+                (-4, 2, "wheat", 1),
+                (-4, 4, "None", 2),
+                (-2, 4, "wood", -3),
+                (0, 3, "sheep", -2),
+                (1, 2, "brick", -3),
+                (3, 0, "None", -2),
+                (3, -2, "None", -1),
+            ],
+        }[self.more_players]
 
-        self.ports = [PortTile(x, y, res, orientation) for x, y, res, orientation in self.init_ports]
+        self.ports = [PortTile(x, y, resssource, orientation) for x, y, resssource, orientation in self.init_ports]
 
     def get_neighbours(self, x: int, y: int) -> list[tuple[int, int]]:
         """Return the coordinates of neighboring tiles for a given tile.
@@ -120,18 +128,12 @@ class BoardGenerator:
 
     def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
-        self.get_tiles()
-        # self.get_nums()
+        self.get_port_tiles()
+
         self.shuffle_and_check()
 
         board = {"ressources": self.tiles, "ports": self.ports}
 
-        # self.draw()
-        # print(self.numbers_deck)
-        # print(self.deck)
-        # for t in self.tiles:
-        # print(t)
-        #    t.Print()
         return board
 
     def shuffle_and_check(self) -> None:
@@ -140,16 +142,16 @@ class BoardGenerator:
         # Shuffling the tiles until a valid permutation is found
         is_valid = False
         while not is_valid:
-            is_valid = self.res_wfc()
+            is_valid = self.collapse_ressource()
 
         # Shuffling the numbers until a valid permutation is found
         is_valid = False
         while not is_valid:
-            is_valid = self.num_wfc()
+            is_valid = self.collapse_number()
 
-    def res_wfc(self) -> bool:
+    def collapse_ressource(self) -> bool:
         """Apply the Wave Function Collapse algorithm for resources."""
-        self.get_tiles()
+        self.get_ressource_tiles()
 
         # setup
         for t in self.tiles:
@@ -162,7 +164,7 @@ class BoardGenerator:
         # to backtrack in case there is no valid options left
         # self.res_stack = []
 
-        self.board_res_options = self.deck.copy()
+        self.board_res_options = self.ressource_deck.copy()
 
         if self.options.get_option("Balanced_ports"):
             for i, p in enumerate(self.ports):
@@ -221,21 +223,22 @@ class BoardGenerator:
             if any(((len(t.res_options) == 0) & (not t.res_collapsed)) for t in self.tiles):
                 return False
 
-        self.deck = [t.ressource for t in self.tiles]
+        self.ressource_deck = [t.ressource for t in self.tiles]
 
         # Temporary solutions for resource clusters
         # only if option is set
         if self.options.get_option("Ressource_clusters"):
             nb_neighbours = self.ressource_neighbours()
             valid = [
-                ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)
+                ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1))
+                for (r, n) in zip(self.ressource_deck, nb_neighbours)
             ]
             if not all(valid):
                 return False
 
         return True
 
-    def num_wfc(self) -> bool:
+    def collapse_number(self) -> bool:
         """Apply the Wave Function Collapse algorithm to assign numbers to tiles.
 
         This method ensures that numbers are distributed across the board
@@ -247,7 +250,7 @@ class BoardGenerator:
             bool: True if a valid configuration is found, False otherwise.
         """
 
-        self.get_nums()
+        self.get_numbers()
 
         # setup
         for t in self.tiles:
@@ -324,7 +327,7 @@ class BoardGenerator:
                     # as soon as one ressource gets both picked,
                     # then the others can have at most one
                     # effectivelly, exactly one
-                    if not self.options.get_option("More_players"):  # or (self.options["More_players"] and ress_has_two68):
+                    if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
                         for n in non_collapsed_same_res:
                             n.num_options = [num for num in n.num_options if num != other_n]
 
@@ -345,7 +348,7 @@ class BoardGenerator:
 
         # TEMPORARY: if, in 5-6 player games, more than one ressource type has both 6 and 8
         # (meaning one has neither), board is invalid
-        if self.options.get_option("More_players") and any(
+        if self.more_players and any(
             len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
             for res in self.ressource_list[:-1]
         ):
@@ -365,9 +368,9 @@ class BoardGenerator:
                 tiles with the same resource for each tile.
         """
 
-        nb_neighbours = [0] * len(self.deck)
+        nb_neighbours = [0] * len(self.ressource_deck)
         for i, t in enumerate(self.tiles):
-            same_ressources_idx = where(self.deck, t.ressource)
+            same_ressources_idx = where(self.ressource_deck, t.ressource)
             same_ressources_centers = [self.tiles[i].get_coords() for i in same_ressources_idx]
             neighbours = t.neighbours()
             same_type_neighbours = [s for s in same_ressources_centers if s in neighbours]
@@ -386,7 +389,10 @@ class BoardGenerator:
         """
 
         nb_neighbours = self.ressource_neighbours()
-        valid = [((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1)) for (r, n) in zip(self.deck, nb_neighbours)]
+        valid = [
+            ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1))
+            for (r, n) in zip(self.ressource_deck, nb_neighbours)
+        ]
         return valid
 
     def check_ports(self) -> list[bool]:
@@ -417,7 +423,7 @@ class BoardGenerator:
             list: A list of boolean values indicating if each tile's number passes the check.
         """
 
-        valid = [True] * len(self.deck)
+        valid = [True] * len(self.ressource_deck)
         for i, t in enumerate(self.tiles):
 
             # check that no same numbers are touching
@@ -463,12 +469,12 @@ class BoardGenerator:
         # For all ressources (except desert), check that there is no repeat
         # For 5/6 players, at most one repeat
         for i, r in enumerate(self.ressource_list[:-1]):
-            ress_idx = where(self.deck, r)
+            ress_idx = where(self.ressource_deck, r)
             ress_nums = [self.numbers_deck[j] for j in ress_idx]
             unique_nums = list(set(ress_nums))
             count_nums = [ress_nums.count(e) for e in unique_nums]
 
-            valid[i] = valid[i] & (sum(count_nums) <= len(unique_nums) + 1 * self.options.get_option("More_players"))
+            valid[i] = valid[i] & (sum(count_nums) <= len(unique_nums) + 1 * self.more_players)
 
             # Conditions for 6 and 8
 
@@ -476,7 +482,7 @@ class BoardGenerator:
             ress_8_count = sum(ress_nums.count(e) for e in unique_nums if e == 8)
 
             # there can only be at most one of either for 3-4 player boards,
-            if not self.options.get_option("More_players"):
+            if not self.more_players:
                 valid[i] = valid[i] & (ress_6_count + ress_8_count <= 1)
 
             # and at least one, or both (but not twice the same) for 5-6 player boards

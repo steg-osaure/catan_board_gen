@@ -40,8 +40,9 @@ class BoardDrawer:
         )
 
     def set_tilesize(self) -> None:
-        all_x = [t.x for t in self.tiles + self.ports]
-        all_y = [t.y for t in self.tiles + self.ports]
+        # Adding zero to avoid errors if no tiles are present
+        all_x = [0] + [t.x for t in self.tiles + self.ports]
+        all_y = [0] + [t.y for t in self.tiles + self.ports]
         min_x, max_x = min(all_x), max(all_x)
         min_y, max_y = min(all_y), max(all_y)
         n_rows = abs(max_y - min_y) + 1

@@ -19,7 +19,7 @@ class CBGenApp(toga.App):
         self.options: OptionHandler
         self.board_gen: BoardGenerator
         self.board_draw: BoardDrawer
-        self.current_board: dict[str, Any]
+        self.current_board: dict[str, Any] = {"ressources": [], "ports": []}
         self.board_canvas: toga.Canvas
         self.description_buttons: list[toga.Button]
         self.switches: list[toga.Switch]
@@ -186,3 +186,4 @@ class CBGenApp(toga.App):
             **kwargs: Additional arguments passed by the Toga framework.
         """
         self.board_canvas_size = width, height
+        self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
