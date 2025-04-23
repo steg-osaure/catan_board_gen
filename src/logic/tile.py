@@ -11,6 +11,7 @@ class Tile:
     """
 
     relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+    ressource_list: list[str] = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
 
     # coordinates of the corners
     # in hex grid coordinates:

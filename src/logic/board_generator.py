@@ -114,18 +114,6 @@ class BoardGenerator:
 
         self.ports = [PortTile(x, y, resssource, orientation) for x, y, resssource, orientation in self.init_ports]
 
-    def get_neighbours(self, x: int, y: int) -> list[tuple[int, int]]:
-        """Return the coordinates of neighboring tiles for a given tile.
-
-        Args:
-            x (int): The x-coordinate of the tile.
-            y (int): The y-coordinate of the tile.
-
-        Returns:
-            list: A list of tuples representing the coordinates of neighbors.
-        """
-        return [(i[0] + x, i[1] + y) for i in self.relative_neighbours]
-
     def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
         self.get_port_tiles()
@@ -168,9 +156,8 @@ class BoardGenerator:
 
         if self.options.get_option("Balanced_ports"):
             for i, p in enumerate(self.ports):
-                neighbours = self.get_neighbours(p.x, p.y)
                 # remove resource option from the neighboring tiles
-                for t in [t for t in self.tiles if t.get_coords() in neighbours]:
+                for t in [t for t in self.tiles if t.get_coords() in p.neighbours()]:
                     t.res_options = [tres for tres in t.res_options if tres != p.ressource]
 
         while not all(t.res_collapsed for t in self.tiles):
@@ -406,9 +393,7 @@ class BoardGenerator:
 
         valid = [True] * len(self.ports)
         for i, p in enumerate(self.ports):
-            x, y, r, _o = p.x, p.y, p.ressource, p.orientation
-            neighbours = self.get_neighbours(x, y)
-            same_type_neighbours = [t.get_coords() for t in self.tiles if t.get_coords() in neighbours and t.ressource == r]
+            same_type_neighbours = [t.get_coords() for t in self.tiles if t.get_coords() in p.neighbours() and t.ressource == p.ressource]
             valid[i] = valid[i] & (len(same_type_neighbours) == 0)
         return valid
 
