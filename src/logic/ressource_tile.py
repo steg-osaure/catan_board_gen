@@ -15,10 +15,10 @@ class RessourceTile(Tile):
         num_collapsed (bool): Whether the number has been assigned (collapsed) for this tile.
         num_options (list): Possible number token values for the tile.
         res_collapsed (bool): Whether the resource has been assigned (collapsed) for this tile.
-        res_options (list): Possible resource types for the tile.
+        ressource_options (list): Possible resource types for the tile.
     """
 
-    def __init__(self, x: int, y: int, ressource: str, number: int) -> None:
+    def __init__(self, x: int, y: int) -> None:
         """Initialize a Tile instance.
 
         Args:
@@ -32,18 +32,45 @@ class RessourceTile(Tile):
         super().__init__(x, y)
 
         # store ressource
-        self.ressource = ressource
-
-        # store number
-        self.number = number
+        self.ressource: str | None = None
+        self.number: int | None = None
 
         # info for Wave Function Collapsed for numbers
-        self.num_collapsed = False
-        self.num_options = list(range(2, 7)) + list(range(8, 13))
+        self.num_collapsed: bool
+        self.num_options: list[int]
 
         # info for WFC for ressources
+        self.res_collapsed: bool
+        self.ressource_options: list[str]
+
+        self.reset_ressource_options()
+        self.reset_number_options()
+
+    def reset_number_options(self) -> None:
+        """Reset the number options for the tile.
+
+        This method clears the current number options and reinitializes them
+        to the default range of values (2-6, 8-12).
+        """
+        if self.res_collapsed and self.ressource == "desert":
+            self.num_options = []
+            self.num_collapsed = True
+            self.number = 7
+            return
+
+        self.num_options = list(range(2, 7)) + list(range(8, 13))
+        self.num_collapsed = False
+        self.number = None
+
+    def reset_ressource_options(self) -> None:
+        """Reset the resource options for the tile.
+
+        This method clears the current resource options and reinitializes them
+        to the default list of resources.
+        """
+        self.ressource_options = self.ressource_list.copy()
         self.res_collapsed = False
-        self.res_options: list[str] = []
+        self.ressource = None
 
     def num_collapse(self, num: int | None = None) -> None:
         """Assign a number token to the tile using Wave Function Collapse.
@@ -87,12 +114,12 @@ class RessourceTile(Tile):
         # option to manually set the ressource to collapse to
         if res is not None:
             self.ressource = res
-            self.res_options = []
+            self.ressource_options = []
             self.res_collapsed = True
             return
 
-        r.shuffle(self.res_options)
-        self.ressource = self.res_options[0]
+        r.shuffle(self.ressource_options)
+        self.ressource = self.ressource_options[0]
         self.res_collapsed = True
 
     def print_info(self) -> None:

@@ -27,7 +27,7 @@ class BoardGenerator:
         self.tiles: list[RessourceTile] = []
         self.init_ports: list[tuple[int, int, str, int]] = []
         self.ports: list[PortTile] = []
-        self.board_res_options: list[str] = []
+        self.remaining_ressources: list[str] = []
         self.board_num_options: list[int] = []
 
         # options, for the logic:
@@ -60,7 +60,7 @@ class BoardGenerator:
         # generate the list of used tiles coordinates
         column_range = range(-2 - self.offset, 3 + self.offset)
         row_ranges = {j: range(max(-2 - j - self.offset, -2 - self.offset), min(3 - j, 3)) for j in column_range}
-        self.centers_deck = [{"x": i, "y": j} for j in column_range for i in row_ranges[j]]
+        self.centers_deck = [(i, j) for j in column_range for i in row_ranges[j]]
 
     def get_ressources(self) -> None:
         # the deck of resources to use
@@ -77,10 +77,7 @@ class BoardGenerator:
         self.get_numbers()
 
         # Generate the tiles
-        self.tiles = [
-            RessourceTile(coord["x"], coord["y"], ressource, number)
-            for (coord, ressource, number) in zip(self.centers_deck, self.ressource_deck, self.numbers_deck)
-        ]
+        self.tiles = [RessourceTile(x, y) for (x, y) in self.centers_deck]
 
     def get_port_tiles(self) -> None:
 
@@ -130,85 +127,102 @@ class BoardGenerator:
         # Shuffling the tiles until a valid permutation is found
         is_valid = False
         while not is_valid:
+            print("Collapsing ressources")
             is_valid = self.collapse_ressource()
 
         # Shuffling the numbers until a valid permutation is found
         is_valid = False
         while not is_valid:
+            print("Collapsing numbers")
             is_valid = self.collapse_number()
+
+    def update_ressources_near_ports(self) -> None:
+        if self.options.get_option("Balanced_ports"):
+            for p in self.ports:
+                # remove resource option from the neighboring tiles
+                neighbouring_tiles = [t for t in self.tiles if t.get_coords() in p.neighbours()]
+                tiles_to_clean = [t for t in neighbouring_tiles if p.ressource in t.ressource_options]
+
+                for t in tiles_to_clean:
+                    t.ressource_options.remove(p.ressource)
+        return
+
+    def pick_tile_to_collapse(self, to_check: str) -> RessourceTile:
+        # pick the tile with the least options (from non-collapsed tiles)
+        check = lambda t: t.res_collapsed if to_check == "ressource" else t.num_collapsed
+        options = lambda t: len(t.ressource_options) if to_check == "ressource" else len(t.num_options)
+        idx_list = [i for (i, t) in enumerate(self.tiles) if not check(t)]
+        opt_list = [options(t) for t in self.tiles if not check(t)]
+        argmin = where(opt_list, min(opt_list))
+        r.shuffle(argmin)
+        idx_to_collapse = idx_list[argmin[0]]
+        return self.tiles[idx_to_collapse]
+
+    def propagate_ressource_collapse(self, t_col: RessourceTile) -> None:
+
+        # propagate the option decrease
+
+        # remove resource that was chosen from deck,
+        self.remaining_ressources.pop(self.remaining_ressources.index(t_col.ressource))
+        # remove option for all tiles if this resource is not in the deck anymore
+        if not t_col.ressource in self.remaining_ressources:
+            for t in self.tiles:
+                if not t.res_collapsed:
+                    t.ressource_options = [res for res in t.ressource_options if res != t_col.ressource]
+
+        if self.options.get_option("Ressource_clusters"):
+            # remove resource from neighboring tiles' options
+            non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.res_collapsed)]
+            for n in non_collapsed_neighbours:
+
+                # check number of collapsed neighbors:
+                nb_res_neighbours = len(
+                    [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and (t.res_collapsed) and (t.ressource == t_col.ressource))]
+                )
+
+                # TODO: rework: tiles can still generate in "strings":
+                # at the end of a string, there is only one neighbor of the same type,
+                # but the string can be more than 2 tiles long
+                if ((t_col.ressource in ["wheat", "wood", "sheep"]) & (nb_res_neighbours >= 2)) | (
+                    (t_col.ressource in ["brick", "stone", "desert"]) & (nb_res_neighbours >= 1)
+                ):
+                    n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
+
+    def step_ressource_collapse(self) -> bool:
+
+        t_col = self.pick_tile_to_collapse(to_check="ressource")
+        t_col.res_collapse()
+
+        self.propagate_ressource_collapse(t_col)
+
+        # Did we run into a dead end?
+        if any(((len(t.ressource_options) == 0) & (not t.res_collapsed)) for t in self.tiles):
+            return False
+        return True
 
     def collapse_ressource(self) -> bool:
         """Apply the Wave Function Collapse algorithm for resources."""
+
+        # reset the tiles
         self.get_ressource_tiles()
 
-        # setup
-        for t in self.tiles:
-
-            # All tiles get options set to all
-            t.res_collapsed = False
-            t.res_options = self.ressource_list.copy()
-
-        # create a list, used as a stack, storing the changes applied,
+        # TODO: create a list, used as a stack, storing the changes applied,
         # to backtrack in case there is no valid options left
         # self.res_stack = []
 
-        self.board_res_options = self.ressource_deck.copy()
+        self.remaining_ressources = self.ressource_deck.copy()
 
-        if self.options.get_option("Balanced_ports"):
-            for i, p in enumerate(self.ports):
-                # remove resource option from the neighboring tiles
-                for t in [t for t in self.tiles if t.get_coords() in p.neighbours()]:
-                    t.res_options = [tres for tres in t.res_options if tres != p.ressource]
+        self.update_ressources_near_ports()
 
+        step = 0
         while not all(t.res_collapsed for t in self.tiles):
+            print(step)
+            still_valid = self.step_ressource_collapse()
 
-            # pick the tile with the least options (from non-collapsed tiles)
-            res_idx_list = [i for (i, t) in enumerate(self.tiles) if not t.res_collapsed]
-            res_opt_list = [len(t.res_options) for (i, t) in enumerate(self.tiles) if not t.res_collapsed]
-
-            for i in res_idx_list:
-                t = self.tiles[i]
-
-            argmin = where(res_opt_list, min(res_opt_list))
-            r.shuffle(argmin)
-            idx_to_collapse = res_idx_list[argmin[0]]
-
-            t_col = self.tiles[idx_to_collapse]
-
-            # collapse it
-            t_col.res_collapse()
-            res_col = t_col.ressource
-
-            # propagate the option decrease
-
-            # remove resource that was chosen from deck,
-            self.board_res_options.pop(self.board_res_options.index(res_col))
-            # remove option for all tiles if this resource is not in the deck anymore
-            if not res_col in self.board_res_options:
-                for t in self.tiles:
-                    if not t.res_collapsed:
-                        t.res_options = [res for res in t.res_options if res != res_col]
-
-            if self.options.get_option("Ressource_clusters"):
-                # remove resource from neighboring tiles' options
-                non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.res_collapsed)]
-                for n in non_collapsed_neighbours:
-
-                    # check number of collapsed neighbors:
-                    nb_res_neighbours = len([t for t in self.tiles if ((t.get_coords() in n.neighbours()) and (t.res_collapsed) and (t.ressource == res_col))])
-
-                    # TODO: rework: tiles can still generate in "strings":
-                    # at the end of a string, there is only one neighbor of the same type,
-                    # but the string can be more than 2 tiles long
-                    if ((res_col in ["wheat", "wood", "sheep"]) & (nb_res_neighbours >= 2)) | (
-                        (res_col in ["brick", "stone", "desert"]) & (nb_res_neighbours >= 1)
-                    ):
-                        n.res_options = [res for res in n.res_options if res != res_col]
-
-            # balanced ports
-
-            if any(((len(t.res_options) == 0) & (not t.res_collapsed)) for t in self.tiles):
+            if not still_valid:
+                print("reset")
                 return False
+            step += 1
 
         self.ressource_deck = [t.ressource for t in self.tiles]
 
@@ -225,6 +239,75 @@ class BoardGenerator:
 
         return True
 
+    def propagate_number_collapse(self, t_col: RessourceTile) -> None:
+        n_col = t_col.number
+
+        # remove number that was chosen from number deck,
+        self.board_num_options.pop(self.board_num_options.index(n_col))
+        # remove option for all tiles if this number is not in the deck anymore
+        if not n_col in self.board_num_options:
+            for t in self.tiles:
+                if not t.num_collapsed:
+                    t.num_options = [num for num in t.num_options if num != n_col]
+
+        if self.options.get_option("Number_clusters"):
+            # remove number from neighbouring tiles' options
+            non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.num_collapsed)]
+            for n in non_collapsed_neighbours:
+                n.num_options = [num for num in n.num_options if num != n_col]
+
+            # 6 and 8
+            if n_col in [6, 8]:
+                other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+                for n in non_collapsed_neighbours:
+                    n.num_options = [num for num in n.num_options if num != other_n]
+
+        if self.options.get_option("Number_repeats"):
+            # remove number from same ressource tiles' options
+            non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
+            for n in non_collapsed_same_res:
+                n.num_options = [num for num in n.num_options if num != n_col]
+
+            # handling 6 and 8
+            if n_col in [6, 8]:
+                other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+
+                # for 3-4 player games, each ressource can have at most one 6 or one 8
+                # TODO: conditions for 5-6 players
+                # for 5-6 player games, each ressource has at most one 6 and one 8
+                # as soon as one ressource gets both picked,
+                # then the others can have at most one
+                # effectivelly, exactly one
+                if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
+                    for n in non_collapsed_same_res:
+                        n.num_options = [num for num in n.num_options if num != other_n]
+
+                # edge case for 5-6 players:
+                # if a ressource gets both 6 and 8, but another ressource already has either one,
+                # the other needs to get remove from its options
+                # if ress_has_two68:
+                #     for ress_to_fix in [res for res in self.ressource_list
+                #           if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1]:
+                #         t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
+                #         n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
+                #         other_n_res = 6 * (n_col == 8) + 8 * (n_col == 6)
+                #         for n in [t for t in t_res if not t.num_collapsed]:
+                #             n.num_options = [num for num in n.num_options if num != other_n_res]
+
+    def step_number_collapse(self) -> bool:
+        # pick the tile with the least options (from non-collapsed tiles)
+        t_col = self.pick_tile_to_collapse(to_check="number")
+
+        # collapse it
+        t_col.num_collapse()
+
+        # propagate the option decrease
+        self.propagate_number_collapse(t_col)
+
+        if any(((len(t.num_options) == 0) & (not t.num_collapsed)) for t in self.tiles):
+            return False
+        return True
+
     def collapse_number(self) -> bool:
         """Apply the Wave Function Collapse algorithm to assign numbers to tiles.
 
@@ -239,18 +322,10 @@ class BoardGenerator:
 
         self.get_numbers()
 
-        # setup
         for t in self.tiles:
+            t.reset_number_options()
 
-            # All tiles get options set to all
-            t.num_collapsed = False
-            t.num_options = list(range(2, 7)) + list(range(8, 13))
-
-            # desert is collapsed into 7
-            if t.ressource == "desert":
-                t.num_collapse(7)
-
-        # create a list, used as a stack, storing the changes applied,
+        # TODO: create a list, used as a stack, storing the changes applied,
         # to backtrack in case there is no valid options left
         # self.num_stack = []
 
@@ -258,79 +333,9 @@ class BoardGenerator:
         self.board_num_options = [n for n in self.board_num_options if n != 7]
 
         while not all(t.num_collapsed for t in self.tiles):
-
-            # pick the tile with the least options (from non-collapsed tiles)
-            num_idx_list = [i for (i, t) in enumerate(self.tiles) if not t.num_collapsed]
-            num_opt_list = [len(t.num_options) for (i, t) in enumerate(self.tiles) if not t.num_collapsed]
-
-            for i in num_idx_list:
-                t = self.tiles[i]
-
-            argmin = where(num_opt_list, min(num_opt_list))
-            r.shuffle(argmin)
-            idx_to_collapse = num_idx_list[argmin[0]]
-
-            t_col = self.tiles[idx_to_collapse]
-
-            # collapse it
-            t_col.num_collapse()
-            n_col = t_col.number
-
-            # propagate the option decrease
-
-            # remove number that was chosen from number deck,
-            self.board_num_options.pop(self.board_num_options.index(n_col))
-            # remove option for all tiles if this number is not in the deck anymore
-            if not n_col in self.board_num_options:
-                for t in self.tiles:
-                    if not t.num_collapsed:
-                        t.num_options = [num for num in t.num_options if num != n_col]
-
-            if self.options.get_option("Number_clusters"):
-                # remove number from neighbouring tiles' options
-                non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.num_collapsed)]
-                for n in non_collapsed_neighbours:
-                    n.num_options = [num for num in n.num_options if num != n_col]
-
-                # 6 and 8
-                if n_col in [6, 8]:
-                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
-                    for n in non_collapsed_neighbours:
-                        n.num_options = [num for num in n.num_options if num != other_n]
-
-            if self.options.get_option("Number_repeats"):
-                # remove number from same ressource tiles' options
-                non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
-                for n in non_collapsed_same_res:
-                    n.num_options = [num for num in n.num_options if num != n_col]
-
-                # handling 6 and 8
-                if n_col in [6, 8]:
-                    other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
-
-                    # for 3-4 player games, each ressource can have at most one 6 or one 8
-                    # TODO: conditions for 5-6 players
-                    # for 5-6 player games, each ressource has at most one 6 and one 8
-                    # as soon as one ressource gets both picked,
-                    # then the others can have at most one
-                    # effectivelly, exactly one
-                    if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
-                        for n in non_collapsed_same_res:
-                            n.num_options = [num for num in n.num_options if num != other_n]
-
-                    # edge case for 5-6 players:
-                    # if a ressource gets both 6 and 8, but another ressource already has either one,
-                    # the other needs to get remove from its options
-                    # if ress_has_two68:
-                    #     for ress_to_fix in [res for res in self.ressource_list
-                    #           if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1]:
-                    #         t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
-                    #         n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
-                    #         other_n_res = 6 * (n_col == 8) + 8 * (n_col == 6)
-                    #         for n in [t for t in t_res if not t.num_collapsed]:
-                    #             n.num_options = [num for num in n.num_options if num != other_n_res]
-
-            if any(((len(t.num_options) == 0) & (not t.num_collapsed)) for t in self.tiles):
+            still_valid = self.step_number_collapse()
+            if not still_valid:
+                print("reset")
                 return False
 
         # TEMPORARY: if, in 5-6 player games, more than one ressource type has both 6 and 8
