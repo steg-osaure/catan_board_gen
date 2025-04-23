@@ -28,14 +28,15 @@ class BoardGenerator:
         self.ports: list[PortTile] = []
         self.remaining_ressources: list[str] = []
         self.board_num_options: list[int] = []
+        self.stack: list[dict[str, Any]] = []
 
         # options, for the logic:
         self.set_options(options)
 
     def set_options(self, options: OptionHandler) -> None:
         self.options = options
-        self.offset = 0 + 1 * self.options.get_option("More_players")
         self.more_players = self.options.get_option("More_players")
+        self.offset = 0 + 1 * self.more_players
 
     def get_numbers(self) -> None:
         """Generate the deck of numbers for the tiles, including handling desert tiles."""
@@ -104,7 +105,7 @@ class BoardGenerator:
                 (0, 3, "sheep", -2),
                 (1, 2, "brick", -3),
                 (3, 0, "None", -2),
-                (3, -2, "None", -1),
+                (3, -3, "None", -1),
             ],
         }[self.more_players]
 
@@ -112,6 +113,7 @@ class BoardGenerator:
 
     def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
+        self.stack = []
         self.get_port_tiles()
 
         self.shuffle_and_check()

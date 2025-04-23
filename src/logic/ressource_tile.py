@@ -106,9 +106,6 @@ class RessourceTile(Tile):
         Args:
             res (str, optional): A specific resource type to assign to the tile.
                                 If not provided, one is randomly chosen.
-
-        Returns:
-            bool: True if the resource was successfully assigned, False otherwise.
         """
 
         # option to manually set the ressource to collapse to
@@ -123,9 +120,5 @@ class RessourceTile(Tile):
         self.res_collapsed = True
 
     def print_info(self) -> None:
-        """Print the tile's details.
-
-        Returns:
-            str: A string representation of the tile's coordinates, resource type, and number token.
-        """
+        """Print the tile's details."""
         print(f"({self.x}, {self.y}) {self.ressource} {self.number}")
