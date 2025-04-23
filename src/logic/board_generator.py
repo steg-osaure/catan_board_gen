@@ -2,15 +2,14 @@
 
 import random as r
 
+from typing import Any
 
-from logic.tile import Tile
+
 from logic.ressource_tile import RessourceTile
 from logic.port_tile import PortTile
 from logic.utils import where
 
 from core.option_handler import OptionHandler
-
-from typing import Any
 
 
 class BoardGenerator:
@@ -145,12 +144,15 @@ class BoardGenerator:
 
                 for t in tiles_to_clean:
                     t.ressource_options.remove(p.ressource)
-        return
 
     def pick_tile_to_collapse(self, to_check: str) -> RessourceTile:
         # pick the tile with the least options (from non-collapsed tiles)
-        check = lambda t: t.res_collapsed if to_check == "ressource" else t.num_collapsed
-        options = lambda t: len(t.ressource_options) if to_check == "ressource" else len(t.num_options)
+        def check(t: RessourceTile) -> bool:
+            return t.res_collapsed if to_check == "ressource" else t.num_collapsed
+
+        def options(t: RessourceTile) -> int:
+            return len(t.ressource_options) if to_check == "ressource" else len(t.num_options)
+
         idx_list = [i for (i, t) in enumerate(self.tiles) if not check(t)]
         opt_list = [options(t) for t in self.tiles if not check(t)]
         argmin = where(opt_list, min(opt_list))
@@ -163,9 +165,10 @@ class BoardGenerator:
         # propagate the option decrease
 
         # remove resource that was chosen from deck,
-        self.remaining_ressources.pop(self.remaining_ressources.index(t_col.ressource))
+        if t_col.ressource in self.remaining_ressources:
+            self.remaining_ressources.pop(self.remaining_ressources.index(t_col.ressource))
         # remove option for all tiles if this resource is not in the deck anymore
-        if not t_col.ressource in self.remaining_ressources:
+        if t_col.ressource not in self.remaining_ressources:
             for t in self.tiles:
                 if not t.res_collapsed:
                     t.ressource_options = [res for res in t.ressource_options if res != t_col.ressource]
@@ -245,7 +248,7 @@ class BoardGenerator:
         # remove number that was chosen from number deck,
         self.board_num_options.pop(self.board_num_options.index(n_col))
         # remove option for all tiles if this number is not in the deck anymore
-        if not n_col in self.board_num_options:
+        if n_col not in self.board_num_options:
             for t in self.tiles:
                 if not t.num_collapsed:
                     t.num_options = [num for num in t.num_options if num != n_col]
@@ -458,8 +461,8 @@ class BoardGenerator:
 
         # For all ressources (except desert), check that there is no repeat
         # For 5/6 players, at most one repeat
-        for i, r in enumerate(self.ressource_list[:-1]):
-            ress_idx = where(self.ressource_deck, r)
+        for i, ressource in enumerate(self.ressource_list[:-1]):
+            ress_idx = where(self.ressource_deck, ressource)
             ress_nums = [self.numbers_deck[j] for j in ress_idx]
             unique_nums = list(set(ress_nums))
             count_nums = [ress_nums.count(e) for e in unique_nums]

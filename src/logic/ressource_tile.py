@@ -32,8 +32,8 @@ class RessourceTile(Tile):
         super().__init__(x, y)
 
         # store ressource
-        self.ressource: str | None = None
-        self.number: int | None = None
+        self.ressource: str
+        self.number: int
 
         # info for Wave Function Collapsed for numbers
         self.num_collapsed: bool
@@ -60,7 +60,7 @@ class RessourceTile(Tile):
 
         self.num_options = list(range(2, 7)) + list(range(8, 13))
         self.num_collapsed = False
-        self.number = None
+        self.number = 0
 
     def reset_ressource_options(self) -> None:
         """Reset the resource options for the tile.
@@ -70,7 +70,7 @@ class RessourceTile(Tile):
         """
         self.ressource_options = self.ressource_list.copy()
         self.res_collapsed = False
-        self.ressource = None
+        self.ressource = "None"
 
     def num_collapse(self, num: int | None = None) -> None:
         """Assign a number token to the tile using Wave Function Collapse.

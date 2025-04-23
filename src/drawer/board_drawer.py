@@ -64,20 +64,12 @@ class BoardDrawer:
 
         # Draw all tiles:
         for t in self.tiles:
-            screen_x, screen_y = self.convert_coord_to_screen((t.x, t.y))
-
-            self.draw_hex(
-                screen_x,
-                screen_y,
-                t.number,
-                self.tile_size,
-                fill_color=self.color[t.ressource],
-            )
+            self.draw_tile(t)
 
         for p in self.ports:
             self.draw_port(p)
 
-    def draw_hex(self, x: float, y: float, num: int, edge_size: int = 30, fill_color: str = "BLANK") -> None:
+    def draw_tile(self, tile: RessourceTile) -> None:
         """Draw a hexagonal tile on the canvas.
 
         Args:
@@ -87,27 +79,30 @@ class BoardDrawer:
             edge_size (int, optional): Size of the hexagonal edges. Defaults to 30.
             fill_color (str, optional): Fill color for the tile. Defaults to "BLANK".
         """
-        font = toga.Font(family=SANS_SERIF, size=edge_size // 2)
-        w, h = self.board_canvas.measure_text(str(num), font)
+        number, ressource = tile.number, tile.ressource
+        x, y = self.convert_coord_to_screen(tile.get_coords())
+        fill_color = self.color[ressource]
+        font = toga.Font(family=SANS_SERIF, size=self.tile_size // 2)
+        w, h = self.board_canvas.measure_text(str(number), font)
 
         # Drawing the actual hexagonal tile
         with self.board_canvas.Stroke(line_width=2, color="black") as stroker:
-            with stroker.Fill(x, y + edge_size, fill_color) as filler:
+            with stroker.Fill(x, y + self.tile_size, fill_color) as filler:
                 for n in range(6):
                     filler.line_to(
-                        x + edge_size * math.sin(n * math.pi / 3),
-                        y + edge_size * math.cos(n * math.pi / 3),
+                        x + self.tile_size * math.sin(n * math.pi / 3),
+                        y + self.tile_size * math.cos(n * math.pi / 3),
                     )
 
         # Drawing the number token
-        if num != 7:
+        if number != 7:
             with self.board_canvas.Fill(x, y, color="WHITE") as filler:
-                filler.ellipse(x, y, edge_size / 2, edge_size / 2)
+                filler.ellipse(x, y, self.tile_size / 2, self.tile_size / 2)
             with self.board_canvas.Stroke(line_width=2) as stroker:
-                stroker.arc(x, y, edge_size / 2)
-            c = "BLACK" * ((num != 6) & (num != 8)) + "RED" * ((num == 6) | (num == 8))
+                stroker.arc(x, y, self.tile_size / 2)
+            c = "BLACK" * ((number != 6) & (number != 8)) + "RED" * ((number == 6) | (number == 8))
             with self.board_canvas.Fill(x, y, color=c) as text_filler:
-                text_filler.write_text(str(num), x - w / 2.0, y - h / 2.0, font, Baseline.TOP)
+                text_filler.write_text(str(number), x - w / 2.0, y - h / 2.0, font, Baseline.TOP)
 
     def draw_port(self, port: PortTile) -> None:
         """Draw a port on the canvas.

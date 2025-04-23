@@ -35,7 +35,7 @@ class CBGenApp(toga.App):
         self.options = OptionHandler(self.paths.app / "default_options.json")
         self.board_gen = BoardGenerator(self.options)
         self.board_draw = BoardDrawer()
-        #####  Initiate the window and its content  #####
+        # ===  Initiate the window and its content  === #
 
         self.main_window = toga.MainWindow(title=self.formal_name)
 
