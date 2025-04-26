@@ -81,7 +81,8 @@ class BoardGenerator:
 
     def get_port_tiles(self) -> None:
 
-        big_edge_positions = {
+        # Initialize the position of the 3-wide edge tiles
+        edge_positions = {
             False: [
                 ((0, -3), (1, 0)),
                 ((-3, 0), (1, -1)),
@@ -100,7 +101,8 @@ class BoardGenerator:
             ],
         }[self.more_players]
 
-        big_edge_ressources = [
+        # Initialize the port ressources present on the 3-wide edge tiles
+        edge_ressources = [
             ["None", None, "sheep"],
             [None, "stone", None],
             ["None", None, "wheat"],
@@ -108,39 +110,33 @@ class BoardGenerator:
             ["None", None, "brick"],
             [None, "None", None],
         ]
-        # r.shuffle(big_edge_positions)
-        # r.shuffle(big_edge_ressources)
 
-        self.ports = []
-        for position, ressource_list in zip(big_edge_positions, big_edge_ressources):
-            for i, ressource in enumerate(ressource_list):
-                if ressource is not None:
-                    print(f" x: {position[0][0] + i * position[1][0]}, y: {position[0][1] + i * position[1][1]}, ressource: {ressource}, ")
-                    self.ports.append(
-                        PortTile(
-                            x=position[0][0] + i * position[1][0],
-                            y=position[0][1] + i * position[1][1],
-                            ressource=ressource,
-                            orientation=-1,
-                        )
-                    )
+        # Additional 1-wide edge tiles for 5/6 player boards
+        more_positions = {False: [], True: [((3, -1), (0, 0)), ((-1, -3), (0, 0)), ((-4, 1), (0, 0)), ((0, 3), (0, 0))]}[self.more_players]
+        more_ressources = {False: [], True: [[None], [None], ["None"], ["sheep"]]}[self.more_players]
 
-        if self.more_players:
-            more_positions = [(3, -1), (-1, -3), (-4, 1), (0, 3)]
-            more_ressources = [None, None, "None", "sheep"]
-            # r.shuffle(more_positions)
-            # r.shuffle(more_ressources)
+        # Randomize edge tile placement
+        if self.options.get_option("Random_ports"):
+            r.shuffle(edge_positions)
+            r.shuffle(edge_ressources)
+            r.shuffle(more_positions)
+            r.shuffle(more_ressources)
 
-            for i, (ressource_, position_) in enumerate(zip(more_ressources, more_positions)):
-                if ressource_ is not None:
-                    self.ports.append(
-                        PortTile(
-                            x=position_[0],
-                            y=position_[1],
-                            ressource=ressource_,
-                            orientation=-1,
-                        )
-                    )
+        # Initialize port placement following the edge tiles placement
+        edge_positions += more_positions
+        more_ressources += more_ressources
+
+        self.ports = [
+            PortTile(
+                x=position[0][0] + i * position[1][0],
+                y=position[0][1] + i * position[1][1],
+                ressource=ressource,
+                orientation=-1,
+            )
+            for position, ressource_list in zip(edge_positions, edge_ressources)
+            for i, ressource in enumerate(ressource_list)
+            if ressource is not None
+        ]
 
     def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""

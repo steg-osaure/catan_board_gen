@@ -23,5 +23,10 @@
         "default": true,
         "box_text": "No repeating numbers",
         "description": "Prevent numbers from being twice on the same ressource.\nAlso prevent ressources to have more than one 6 or one 8\n(or, for 5-6 players, two 6 or two 8)."
+    },
+    "Random_ports": {
+        "default": false,
+        "box_text": "Random ports",
+        "description": "Randomize the placement of ports."
     }
 }
