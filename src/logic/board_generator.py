@@ -81,6 +81,43 @@ class BoardGenerator:
 
     def get_port_tiles(self) -> None:
 
+        big_edge_positions = {
+            False: [
+                ((3, 0), (-1, 1)),
+                ((3, -3), (0, 1)),
+                ((0, -3), (1, 0)),
+                ((-3, 0), (1, -1)),
+                ((-3, 3), (0, -1)),
+                ((0, 3), (-1, 0)),
+            ]
+        }[self.more_players]
+
+        big_edge_ressources = [
+            ["None", None, "brick"],
+            [None, "wood", None],
+            ["None", None, "wheat"],
+            [None, "stone", None],
+            ["None", None, "sheep"],
+            [None, "None", None],
+        ]
+
+        r.shuffle(big_edge_positions)
+        r.shuffle(big_edge_ressources)
+
+        self.ports = []
+        for position, ressource_list in zip(big_edge_positions, big_edge_ressources):
+            for i, ressource in enumerate(ressource_list):
+                if ressource is not None:
+                    print(f" x: {position[0][0] + i * position[1][0]}, y: {position[0][1] + i * position[1][1]}, ressource: {ressource}, ")
+                    self.ports.append(
+                        PortTile(
+                            x=position[0][0] + i * position[1][0],
+                            y=position[0][1] + i * position[1][1],
+                            ressource=ressource,
+                            orientation=-1,
+                        )
+                    )
+
         # generate the ports
         self.init_ports = {
             False: [
@@ -109,7 +146,7 @@ class BoardGenerator:
             ],
         }[self.more_players]
 
-        self.ports = [PortTile(x, y, resssource, orientation) for x, y, resssource, orientation in self.init_ports]
+        # self.ports = [PortTile(x, y, resssource, orientation) for x, y, resssource, orientation in self.init_ports]
 
     def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
