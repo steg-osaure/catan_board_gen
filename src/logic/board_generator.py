@@ -154,38 +154,6 @@ class BoardGenerator:
 
         return board
 
-    def debug_cluster(self) -> dict[str, Any]:
-        """Handler for the generate board button press event."""
-        self.stack = []
-        self.get_port_tiles()
-        is_valid = True
-        while is_valid:
-            # print("Collapsing ressources")
-            no_dead_end = self.collapse_ressource()
-            if no_dead_end:
-                is_valid = self.check_ressource_clusters()
-        board = {"ressources": self.tiles, "ports": self.ports}
-
-        return board
-
-    def debug_ressources(self) -> dict[str, Any]:
-        self.stack = []
-        n_fail_cluster = 0
-        n_fail_dead_end = 0
-        n_test = 500
-        for _ in range(n_test):
-            self.get_port_tiles()
-            is_valid = self.collapse_ressource()
-            if not is_valid:
-                n_fail_dead_end += 1
-                continue
-            if not self.check_ressource_clusters():
-                n_fail_cluster += 1
-        print(f"Ran {n_test} generations, {n_fail_dead_end} dead ends, failed cluster {n_fail_cluster} times")
-
-        board = {"ressources": self.tiles, "ports": self.ports}
-        return board
-
     def debug_call(self) -> dict[str, Any]:
         if self.restart_debug:
             self.stack = []
@@ -201,8 +169,12 @@ class BoardGenerator:
             self.is_number_valid = False
 
         if not self.is_ressource_valid:
-            self.restart_debug = not self.step_ressource_collapse()
+            # self.restart_debug = not self.step_ressource_collapse()
+            self.restart_debug = not self.collapse_ressource()
             self.is_ressource_valid = all(t.res_collapsed for t in self.tiles)
+            if self.is_ressource_valid:
+                for t in self.tiles:
+                    t.reset_number_options()
             return {"ressources": self.tiles, "ports": self.ports}
 
         if not self.check_ressource_clusters():
@@ -347,8 +319,6 @@ class BoardGenerator:
                 return False
             step += 1
 
-        # TODO: this is debug
-        # return self.check_ressource_clusters()
         return True
 
     def propagate_number_collapse(self, t_col: RessourceTile) -> None:
@@ -370,7 +340,7 @@ class BoardGenerator:
 
             # 6 and 8
             if n_col in [6, 8]:
-                other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+                other_n = {6: 8, 8: 6}[n_col]
                 for n in non_collapsed_neighbours:
                     n.num_options = [num for num in n.num_options if num != other_n]
 
@@ -382,29 +352,66 @@ class BoardGenerator:
 
             # handling 6 and 8
             if n_col in [6, 8]:
-                other_n = 6 * (n_col == 8) + 8 * (n_col == 6)
+                other_n = {6: 8, 8: 6}[n_col]
 
                 # for 3-4 player games, each ressource can have at most one 6 or one 8
+                if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
+                    for n in non_collapsed_same_res:
+                        n.num_options = [num for num in n.num_options if num != other_n]
+
                 # TODO: conditions for 5-6 players
                 # for 5-6 player games, each ressource has at most one 6 and one 8
                 # as soon as one ressource gets both picked,
                 # then the others can have at most one
                 # effectivelly, exactly one
-                if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
-                    for n in non_collapsed_same_res:
-                        n.num_options = [num for num in n.num_options if num != other_n]
 
                 # edge case for 5-6 players:
                 # if a ressource gets both 6 and 8, but another ressource already has either one,
                 # the other needs to get remove from its options
-                # if ress_has_two68:
-                #     for ress_to_fix in [res for res in self.ressource_list
-                #           if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1]:
-                #         t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
-                #         n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
-                #         other_n_res = 6 * (n_col == 8) + 8 * (n_col == 6)
-                #         for n in [t for t in t_res if not t.num_collapsed]:
-                #             n.num_options = [num for num in n.num_options if num != other_n_res]
+                # ress_has_two68 =
+                # if self.more_players and any(
+                #    len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
+                #    for res in self.ressource_list[:-1]
+                # ):
+                #    n_fail_repeats += 1
+                else:
+                    ressource_has_6and8 = [
+                        ressource
+                        for ressource in self.ressource_list
+                        if len([t.ressource for t in self.tiles if ((t.ressource == ressource) and t.num_collapsed and (t.number in [6, 8]))]) == 2
+                    ]
+
+                    if len(ressource_has_6and8) >= 1:
+                        for other_res in [res for res in self.ressource_list if res not in ressource_has_6and8]:
+                            other_res_tiles = [t for t in self.tiles if (t.ressource == other_res)]
+
+                            if len([t for t in other_res_tiles if t.num_collapsed and (t.number in [6, 8])]) == 1:
+                                n_res = [t.number for t in other_res_tiles if ((t.num_collapsed) and (t.number in [6, 8]))][0]
+                                # other_n_res = {6: 8, 8: 6}[n_res]
+
+                                for n in [t for t in other_res_tiles if not t.num_collapsed]:
+                                    n.num_options = [num for num in n.num_options if num not in [6, 8]]
+
+                """
+                else:
+                    has_two68 = {}
+                    for ressource in self.ressource_list:
+                        tiles_of_ressource = [t for t in self.tiles if t.ressource == ressource]
+                        has_two68[ressource] = any([t.number == 6 for t in tiles_of_ressource]) and any([t.number == 8 for t in tiles_of_ressource])
+                    ress_has_two68 = any([has_two68.values()])
+
+                    if ress_has_two68:
+                        for ress_to_fix in [
+                            res
+                            for res in self.ressource_list
+                            if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1
+                        ]:
+                            t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
+                            n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
+                            other_n_res = {6: 8, 8: 6}[n_res]
+                            for n in [t for t in t_res if not t.num_collapsed]:
+                                n.num_options = [num for num in n.num_options if num != other_n_res]
+                """
 
     def step_number_collapse(self) -> bool:
         # pick the tile with the least options (from non-collapsed tiles)
@@ -450,7 +457,10 @@ class BoardGenerator:
                 # print("reset")
                 return False
 
-        # TEMPORARY: if, in 5-6 player games, more than one ressource type has both 6 and 8
+        # TODO: debug for count of failure
+        return True
+
+        # TODO: if, in 5-6 player games, more than one ressource type has both 6 and 8
         # (meaning one has neither), board is invalid
         if self.more_players and any(
             len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
@@ -594,3 +604,84 @@ class BoardGenerator:
                 valid[i] = valid[i] & (ress_6_count + ress_8_count >= 1) & (ress_6_count <= 1) & (ress_8_count <= 1)
 
         return valid
+
+    def debug_cluster(self) -> dict[str, Any]:
+        """Handler for the generate board button press event."""
+        self.stack = []
+        self.get_port_tiles()
+        is_valid = True
+        while is_valid:
+            # print("Collapsing ressources")
+            no_dead_end = self.collapse_ressource()
+            if no_dead_end:
+                is_valid = self.check_ressource_clusters()
+        board = {"ressources": self.tiles, "ports": self.ports}
+
+        return board
+
+    def debug_ressources(self) -> dict[str, Any]:
+        self.stack = []
+        n_fail_cluster = 0
+        n_fail_dead_end = 0
+        n_test = 500
+        for _ in range(n_test):
+            self.get_port_tiles()
+            is_valid = self.collapse_ressource()
+            if not is_valid:
+                n_fail_dead_end += 1
+                continue
+            if not self.check_ressource_clusters():
+                n_fail_cluster += 1
+        print(f"Ran {n_test} generations, {n_fail_dead_end} dead ends, failed cluster {n_fail_cluster} times")
+
+        board = {"ressources": self.tiles, "ports": self.ports}
+        return board
+
+    def debug_numbers(self) -> dict[str, Any]:
+        self.stack = []
+        n_fail_repeats = 0
+        n_fail_dead_end = 0
+        n_test = 500
+        for _ in range(n_test):
+            self.get_port_tiles()
+            valid_ressource = False
+            while not valid_ressource:
+                valid_ressource = self.collapse_ressource()
+
+            is_valid = self.collapse_number()
+            if not is_valid:
+                n_fail_dead_end += 1
+                continue
+
+            if self.more_players and any(
+                len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
+                for res in self.ressource_list[:-1]
+            ):
+                n_fail_repeats += 1
+                return {"ressources": self.tiles, "ports": self.ports}
+
+        print(f"Ran {n_test} generations, {n_fail_dead_end} dead ends, failed nuber repeats {n_fail_repeats} times")
+
+        board = {"ressources": self.tiles, "ports": self.ports}
+        return board
+
+    def debug_repeats(self) -> dict[str, Any]:
+        """Handler for the generate board button press event."""
+        self.stack = []
+        self.get_port_tiles()
+        is_valid = False
+        while not is_valid:
+            # print("Collapsing ressources")
+            is_valid = self.collapse_ressource()
+
+        while is_valid:
+            # print("Collapsing ressources")
+            no_dead_end = self.collapse_number()
+            if no_dead_end and any(
+                len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
+                for res in self.ressource_list[:-1]
+            ):
+                break
+        board = {"ressources": self.tiles, "ports": self.ports}
+
+        return board
