@@ -72,7 +72,7 @@ class RessourceTile(Tile):
         self.res_collapsed = False
         self.ressource = "None"
 
-    def num_collapse(self, num: int | None = None) -> None:
+    def num_collapse(self) -> None:
         """Assign a number token to the tile using Wave Function Collapse.
 
         If a specific number is provided, it is directly assigned. Otherwise,
@@ -86,19 +86,12 @@ class RessourceTile(Tile):
             bool: True if the number was successfully assigned, False otherwise.
         """
 
-        # option to manually set the number to collapse to
-        if num is not None:
-            self.number = num
-            self.num_options = []
-            self.num_collapsed = True
-            return
-
         r.shuffle(self.num_options)
         self.number = self.num_options[0]
         self.num_options = []
         self.num_collapsed = True
 
-    def res_collapse(self, res: str | None = None) -> None:
+    def res_collapse(self) -> None:
         """Assign a resource type to the tile using Wave Function Collapse.
 
         If a specific resource is provided, it is directly assigned. Otherwise,
@@ -109,17 +102,12 @@ class RessourceTile(Tile):
                                 If not provided, one is randomly chosen.
         """
 
-        # option to manually set the ressource to collapse to
-        if res is not None:
-            self.ressource = res
-            self.ressource_options = []
-            self.res_collapsed = True
-            return
-
         r.shuffle(self.ressource_options)
         self.ressource = self.ressource_options[0]
+        removed_options = [] if len(self.ressource_options) == 0 else self.ressource_options[1:]
         self.ressource_options = []
         self.res_collapsed = True
+        return removed_options
 
     def print_info(self) -> None:
         """Print the tile's details."""
