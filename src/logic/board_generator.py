@@ -89,7 +89,15 @@ class BoardGenerator:
                 ((-3, 0), (1, -1)),
                 ((-3, 3), (0, -1)),
                 ((0, 3), (-1, 0)),
-            ]
+            ],
+            True: [
+                ((3, 0), (-1, 1)),
+                ((3, -4), (0, 1)),
+                ((0, -4), (1, 0)),
+                ((-4, 0), (1, -1)),
+                ((-4, 4), (0, -1)),
+                ((-1, 4), (-1, 0)),
+            ],
         }[self.more_players]
 
         big_edge_ressources = [
@@ -114,6 +122,23 @@ class BoardGenerator:
                             x=position[0][0] + i * position[1][0],
                             y=position[0][1] + i * position[1][1],
                             ressource=ressource,
+                            orientation=-1,
+                        )
+                    )
+
+        if self.more_players:
+            more_positions = [(3, -1), (-1, -3), (-4, 1), (0, 3)]
+            more_ressources = [None, None, "None", "sheep"]
+            r.shuffle(more_positions)
+            r.shuffle(more_ressources)
+
+            for i, (ressource_, position_) in enumerate(zip(more_ressources, more_positions)):
+                if ressource_ is not None:
+                    self.ports.append(
+                        PortTile(
+                            x=position_[0],
+                            y=position_[1],
+                            ressource=ressource_,
                             orientation=-1,
                         )
                     )
