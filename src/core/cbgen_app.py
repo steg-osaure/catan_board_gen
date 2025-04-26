@@ -1,5 +1,6 @@
 """Module in charge of handleing the main application."""
 
+import time
 from typing import Any
 
 import toga
@@ -75,9 +76,8 @@ class CBGenApp(toga.App):
         # self.current_board = self.board_gen.call()
         # self.current_board = self.board_gen.debug_call()
         self.current_board = self.board_gen.debug_ressources()
-        # self.board_draw.draw_board(self.current_board, self.board_canvas.style)
+        # self.current_board = self.board_gen.debug_cluster()
         self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
-        # self.draw()
 
     def on_option_switch(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         """Handle changes to toggle switches in the UI.

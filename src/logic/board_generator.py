@@ -154,6 +154,20 @@ class BoardGenerator:
 
         return board
 
+    def debug_cluster(self) -> dict[str, RessourceTile | PortTile]:
+        """Handler for the generate board button press event."""
+        self.stack = []
+        self.get_port_tiles()
+        is_valid = True
+        while is_valid:
+            # print("Collapsing ressources")
+            no_dead_end = self.collapse_ressource()
+            if no_dead_end:
+                is_valid = self.check_ressource_clusters()
+        board = {"ressources": self.tiles, "ports": self.ports}
+
+        return board
+
     def debug_ressources(self) -> dict[str, Any]:
         self.stack = []
         n_fail_cluster = 0
@@ -275,32 +289,31 @@ class BoardGenerator:
                 # check number of collapsed neighbors:
                 collapsed_neighbours = [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))]
                 # also consider same ressource tiles connected to the newly collapsed one, but not directly to this one
-                nb_res_neighbours = len(set(collapsed_neighbours + same_res_neighbours))
+                set_to_test = set(collapsed_neighbours + same_res_neighbours)
+                nb_res_neighbours = len(set_to_test)
 
                 if nb_res_neighbours > self.max_neighbours[t_col.ressource]:
                     n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
 
-            """
-            # get neighbours of the same type:
-            same_ressource_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and t.ressource == t_col.ressource)]
+            # Also need to propagate to collapsed neighbour of t_col
 
-            for same_n in same_ressource_neighbours:
-                non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in same_n.neighbours() and not t.res_collapsed)]
-                for n in non_collapsed_neighbours:
+            for same_n in same_res_neighbours:
+                additional_check_tiles = [t for t in self.tiles if (t.get_coords() in same_n.neighbours() and not t.res_collapsed)]
+                # no need to check those already checked
+                additional_check_tiles = [t for t in additional_check_tiles if t not in to_propagate]
+                same_res_neighbours_ = [
+                    t for t in self.tiles if ((t.get_coords() in same_n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))
+                ]
+                for n in additional_check_tiles:
+                    collapsed_neighbours = [
+                        t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))
+                    ]
+                    # also consider same ressource tiles connected to the newly collapsed one, but not directly to this one
+                    set_to_test = set(collapsed_neighbours + same_res_neighbours_)
+                    nb_res_neighbours = len(set_to_test)
 
-                    # check number of collapsed neighbors:
-                    nb_res_neighbours = len(
-                        [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and (t.res_collapsed) and (t.ressource == t_col.ressource))]
-                    )
-
-                    # TODO: rework: tiles can still generate in "strings":
-                    # at the end of a string, there is only one neighbor of the same type,
-                    # but the string can be more than 2 tiles long
-                    if ((t_col.ressource in ["wheat", "wood", "sheep"]) & (nb_res_neighbours >= 1)) | (
-                        (t_col.ressource in ["brick", "stone", "desert"]) & (nb_res_neighbours >= 0)
-                    ):
+                    if nb_res_neighbours > self.max_neighbours[t_col.ressource]:
                         n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
-            """
 
     def step_ressource_collapse(self) -> bool:
 
@@ -472,7 +485,7 @@ class BoardGenerator:
             nb_neighbours[i] = len(same_type_neighbours)
         return nb_neighbours
 
-    def check_ressource_clusters(self) -> list[bool]:
+    def check_ressource_clusters(self) -> bool:
         """Validate the resource distribution to prevent excessive clustering.
 
         Clusters of the same resource type are limited based on constraints:
@@ -483,16 +496,11 @@ class BoardGenerator:
             list: A list of boolean values indicating if each tile passes the check.
         """
 
-        self.ressource_deck = [t.ressource for t in self.tiles]
-
-        # Temporary solutions for resource clusters
-        # only if option is set
         if self.options.get_option("Ressource_clusters"):
-            nb_neighbours = self.ressource_neighbours()
-            valid = [
-                ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1))
-                for (r, n) in zip(self.ressource_deck, nb_neighbours)
-            ]
+            valid = []
+            for t in self.tiles:
+                same_res_neighbours = len([neigh for neigh in self.tiles if neigh.get_coords() in t.neighbours() and neigh.ressource == t.ressource])
+                valid.append(same_res_neighbours <= self.max_neighbours[t.ressource])
             if not all(valid):
                 return False
         return True
