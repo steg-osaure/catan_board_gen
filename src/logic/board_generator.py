@@ -169,17 +169,12 @@ class BoardGenerator:
             self.is_number_valid = False
 
         if not self.is_ressource_valid:
-            self.restart_debug = not self.step_ressource_collapse()
-            # self.restart_debug = not self.collapse_ressource()
+            # self.restart_debug = not self.step_ressource_collapse()
+            self.restart_debug = not self.collapse_ressource()
             self.is_ressource_valid = all(t.res_collapsed for t in self.tiles)
             if self.is_ressource_valid:
                 for t in self.tiles:
                     t.reset_number_options()
-            # print("Collapsed tile:")
-            # self.stack[-1][0].print_info()
-            # print("Removed otions:")
-            # for k, v in self.stack[-1][1].items():
-            #    print(k.get_coords(), v)
             return {"ressources": self.tiles, "ports": self.ports}
 
         if not self.check_ressource_clusters():
@@ -187,8 +182,7 @@ class BoardGenerator:
             return {"ressources": self.tiles, "ports": self.ports}
 
         if not self.is_number_valid:
-            # self.restart_debug = not self.step_number_collapse()
-            self.restart_debug = not self.collapse_number()
+            self.restart_debug = not self.step_number_collapse()
             self.is_number_valid = all(t.num_collapsed for t in self.tiles)
             return {"ressources": self.tiles, "ports": self.ports}
 
@@ -199,7 +193,6 @@ class BoardGenerator:
             self.restart_debug = True
             return {"ressources": self.tiles, "ports": self.ports}
 
-        self.restart_debug = True
         return {"ressources": self.tiles, "ports": self.ports}
 
     def shuffle_and_check(self) -> None:
@@ -208,11 +201,13 @@ class BoardGenerator:
         # Shuffling the tiles until a valid permutation is found
         is_valid = False
         while not is_valid:
+            # print("Collapsing ressources")
             is_valid = self.collapse_ressource()
 
         # Shuffling the numbers until a valid permutation is found
         is_valid = False
         while not is_valid:
+            # print("Collapsing numbers")
             is_valid = self.collapse_number()
 
     def update_ressources_near_ports(self) -> None:
@@ -251,7 +246,6 @@ class BoardGenerator:
         if t_col.ressource not in self.remaining_ressources:
             for t in self.tiles:
                 if not t.res_collapsed:
-                    self.stack[-1][1].update({t: [t_col.ressource]})
                     t.ressource_options = [res for res in t.ressource_options if res != t_col.ressource]
 
         # Remove ressource options for (potentially indirect) neighbours
@@ -287,56 +281,18 @@ class BoardGenerator:
             # next to the tile to check
             set_to_check = set(collapsed_neighbours + additional_neighbours)
             if len(set_to_check) > self.max_neighbours[ressource]:
-                self.stack[-1][1].update({n: [ressource]})
                 n.ressource_options = [res for res in n.ressource_options if res != ressource]
 
     def step_ressource_collapse(self) -> bool:
 
         t_col = self.pick_tile_to_collapse(to_check="ressource")
-        self.stack.append((t_col, {t_col: t_col.res_collapse()}))
+        t_col.res_collapse()
 
         self.propagate_ressource_collapse(t_col)
 
         # Did we run into a dead end?
         if any(((len(t.ressource_options) == 0) & (not t.res_collapsed)) for t in self.tiles):
-            # print("State of the stack:")
-            # for i in range(len(self.stack)):
-            # print("Collapsed tile:")
-            # self.stack[i][0].print_info()
-            # print("Removed otions:")
-            # for k, v in self.stack[i][1].items():
-            #    print(k.get_coords(), v)
-            # return False
-            # print("Dead end! Attempting to track back")
-
-            good_track_back = False
-            while not good_track_back:
-                # Restore removed options from last step
-                if len(self.stack) == 0:
-                    # print("Track back failed!")
-                    return False
-                self.stack[-1][0].res_collapsed = False
-                for k, v in self.stack[-1][1].items():
-                    k.ressource_options += v
-                    # print(f"Restored options {v} for tile {k.get_coords()}, current options:")
-                    # k.print_info()
-                # Make sure that last collapsed tile has one option left
-                if len(self.stack[-1][0].ressource_options) > 0:
-                    self.stack[-1][0].ressource = "None"
-                    self.stack.pop()
-                    good_track_back = True
-                # Otherwise, restore also the option that was collapsed and track back one more step
-                else:
-                    self.stack[-1][0].ressource_options.append(self.stack[-1][0].ressource)
-                    self.stack[-1][0].ressource = "None"
-                    self.stack.pop()
-
-            # reset the deck of remaining ressources
-            self.remaining_ressources = self.ressource_deck.copy()
-            for ressource_to_remove in [self.stack[i][0].ressource for i in range(len(self.stack))]:
-                if ressource_to_remove in self.remaining_ressources:
-                    self.remaining_ressources.pop(self.remaining_ressources.index(ressource_to_remove))
-
+            return False
         return True
 
     def collapse_ressource(self) -> bool:
@@ -355,9 +311,11 @@ class BoardGenerator:
 
         step = 0
         while not all(t.res_collapsed for t in self.tiles):
+            # print(step)
             still_valid = self.step_ressource_collapse()
 
             if not still_valid:
+                # print("reset")
                 return False
             step += 1
 
@@ -459,6 +417,7 @@ class BoardGenerator:
         while not all(t.num_collapsed for t in self.tiles):
             still_valid = self.step_number_collapse()
             if not still_valid:
+                # print("reset")
                 return False
 
         return True
@@ -602,6 +561,7 @@ class BoardGenerator:
         self.get_port_tiles()
         is_valid = True
         while is_valid:
+            # print("Collapsing ressources")
             no_dead_end = self.collapse_ressource()
             if no_dead_end:
                 is_valid = self.check_ressource_clusters()
@@ -661,9 +621,11 @@ class BoardGenerator:
         self.get_port_tiles()
         is_valid = False
         while not is_valid:
+            # print("Collapsing ressources")
             is_valid = self.collapse_ressource()
 
         while is_valid:
+            # print("Collapsing ressources")
             no_dead_end = self.collapse_number()
             if no_dead_end and any(
                 len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
