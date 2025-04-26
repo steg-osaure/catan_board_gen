@@ -131,7 +131,7 @@ class BoardGenerator:
 
         # Initialize port placement following the edge tiles placement
         edge_positions += more_positions
-        edge_ressources += more_ressources
+        edge_ressources += more_ressources  # type: ignore
 
         self.ports = [
             PortTile(
@@ -145,7 +145,7 @@ class BoardGenerator:
             if ressource is not None
         ]
 
-    def call(self) -> dict[str, RessourceTile | PortTile]:
+    def call(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
         self.stack = []
         self.get_port_tiles()
@@ -154,7 +154,7 @@ class BoardGenerator:
 
         return board
 
-    def debug_cluster(self) -> dict[str, RessourceTile | PortTile]:
+    def debug_cluster(self) -> dict[str, Any]:
         """Handler for the generate board button press event."""
         self.stack = []
         self.get_port_tiles()
@@ -173,7 +173,7 @@ class BoardGenerator:
         n_fail_cluster = 0
         n_fail_dead_end = 0
         n_test = 500
-        for i in range(n_test):
+        for _ in range(n_test):
             self.get_port_tiles()
             is_valid = self.collapse_ressource()
             if not is_valid:
@@ -276,44 +276,40 @@ class BoardGenerator:
                 if not t.res_collapsed:
                     t.ressource_options = [res for res in t.ressource_options if res != t_col.ressource]
 
-        # remove resource from neighboring tiles' options
+        # Remove ressource options for (potentially indirect) neighbours
         if self.options.get_option("Ressource_clusters"):
-            # prevent "string" issue: get same ressource neighbours of the collapsed tile
+
+            # Fetch the neighbours of the collapsed tile that share the same ressource.
+            # Their neighbours might also need to have their options removed
             same_res_neighbours = [t for t in self.tiles if ((t.get_coords() in t_col.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))]
-            # same_res_neighbours = []
 
-            # Get non collapsed neighbours
+            # Propagate on direct neighbours
             to_propagate = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.res_collapsed)]
-            for n in to_propagate:
+            self.propagate_ressource_cluster_collapse(t_col.ressource, to_propagate, same_res_neighbours)
 
-                # check number of collapsed neighbors:
-                collapsed_neighbours = [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))]
-                # also consider same ressource tiles connected to the newly collapsed one, but not directly to this one
-                set_to_test = set(collapsed_neighbours + same_res_neighbours)
-                nb_res_neighbours = len(set_to_test)
-
-                if nb_res_neighbours > self.max_neighbours[t_col.ressource]:
-                    n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
-
-            # Also need to propagate to collapsed neighbour of t_col
-
+            # Propagate on indirect neighbours
             for same_n in same_res_neighbours:
-                additional_check_tiles = [t for t in self.tiles if (t.get_coords() in same_n.neighbours() and not t.res_collapsed)]
-                # no need to check those already checked
-                additional_check_tiles = [t for t in additional_check_tiles if t not in to_propagate]
-                same_res_neighbours_ = [
+                # Fetch indirect that share the same ressource (include the collapsed tile)
+                indirect_neighbours = [
                     t for t in self.tiles if ((t.get_coords() in same_n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))
                 ]
-                for n in additional_check_tiles:
-                    collapsed_neighbours = [
-                        t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))
-                    ]
-                    # also consider same ressource tiles connected to the newly collapsed one, but not directly to this one
-                    set_to_test = set(collapsed_neighbours + same_res_neighbours_)
-                    nb_res_neighbours = len(set_to_test)
 
-                    if nb_res_neighbours > self.max_neighbours[t_col.ressource]:
-                        n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
+                # Get indirect neighbours (no need to check tiles that where already propagated)
+                additional_check_tiles = [t for t in self.tiles if (t.get_coords() in same_n.neighbours() and not t.res_collapsed and t not in to_propagate)]
+
+                self.propagate_ressource_cluster_collapse(t_col.ressource, additional_check_tiles, indirect_neighbours)
+
+    def propagate_ressource_cluster_collapse(self, ressource: str, tiles_to_check: list[RessourceTile], additional_neighbours: list[RessourceTile]) -> None:
+        for n in tiles_to_check:
+            # Get collapsed neighbours of the ressource to check
+            collapsed_neighbours = [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == ressource))]
+
+            # We have to consider the direct neighbours of the tile,
+            # but also additional tiles of the same ressource that might for a cluster but not be directly
+            # next to the tile to check
+            set_to_check = set(collapsed_neighbours + additional_neighbours)
+            if len(set_to_check) > self.max_neighbours[ressource]:
+                n.ressource_options = [res for res in n.ressource_options if res != ressource]
 
     def step_ressource_collapse(self) -> bool:
 

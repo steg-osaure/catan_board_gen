@@ -1,6 +1,5 @@
 """Module in charge of handleing the main application."""
 
-import time
 from typing import Any
 
 import toga
@@ -73,9 +72,9 @@ class CBGenApp(toga.App):
     def generate_pressed(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         """Handler for the generate board button press event."""
         self.board_gen.set_options(self.options)
-        # self.current_board = self.board_gen.call()
+        self.current_board = self.board_gen.call()
         # self.current_board = self.board_gen.debug_call()
-        self.current_board = self.board_gen.debug_ressources()
+        # self.current_board = self.board_gen.debug_ressources()
         # self.current_board = self.board_gen.debug_cluster()
         self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
 
