@@ -345,73 +345,40 @@ class BoardGenerator:
                     n.num_options = [num for num in n.num_options if num != other_n]
 
         if self.options.get_option("Number_repeats"):
-            # remove number from same ressource tiles' options
-            non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
-            for n in non_collapsed_same_res:
-                n.num_options = [num for num in n.num_options if num != n_col]
+            self.propagate_number_repeate_collapse(t_col)
 
-            # handling 6 and 8
-            if n_col in [6, 8]:
-                other_n = {6: 8, 8: 6}[n_col]
+    def propagate_number_repeate_collapse(self, t_col: RessourceTile) -> None:
+        n_col = t_col.number
+        # remove number from same ressource tiles' options
+        non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
+        for n in non_collapsed_same_res:
+            n.num_options = [num for num in n.num_options if num != n_col]
 
-                # for 3-4 player games, each ressource can have at most one 6 or one 8
-                if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
-                    for n in non_collapsed_same_res:
-                        n.num_options = [num for num in n.num_options if num != other_n]
+        # handling 6 and 8
+        if n_col in [6, 8]:
+            other_n = {6: 8, 8: 6}[n_col]
 
-                # TODO: conditions for 5-6 players
-                # for 5-6 player games, each ressource has at most one 6 and one 8
-                # as soon as one ressource gets both picked,
-                # then the others can have at most one
-                # effectivelly, exactly one
+            # for 3-4 player games, each ressource can have at most one 6 or one 8
+            if not self.more_players:  # or (self.options["More_players"] and ress_has_two68):
+                for n in non_collapsed_same_res:
+                    n.num_options = [num for num in n.num_options if num != other_n]
 
-                # edge case for 5-6 players:
-                # if a ressource gets both 6 and 8, but another ressource already has either one,
-                # the other needs to get remove from its options
-                # ress_has_two68 =
-                # if self.more_players and any(
-                #    len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
-                #    for res in self.ressource_list[:-1]
-                # ):
-                #    n_fail_repeats += 1
-                else:
-                    ressource_has_6and8 = [
-                        ressource
-                        for ressource in self.ressource_list
-                        if len([t.ressource for t in self.tiles if ((t.ressource == ressource) and t.num_collapsed and (t.number in [6, 8]))]) == 2
-                    ]
+            # for 5-6 player games, each ressource has at most one 6 and one 8
+            # as soon as one ressource gets both picked,
+            # then the others can have at most one
+            # effectivelly, exactly one
+            elif any(
+                len([t.ressource for t in self.tiles if ((t.ressource == ressource) and t.num_collapsed and (t.number in [6, 8]))]) == 2
+                for ressource in self.ressource_list
+            ):
+                # Loop over all ressource
+                for ressource in self.ressource_list:
+                    ressource_tiles = [t for t in self.tiles if t.ressource == ressource]
 
-                    if len(ressource_has_6and8) >= 1:
-                        for other_res in [res for res in self.ressource_list if res not in ressource_has_6and8]:
-                            other_res_tiles = [t for t in self.tiles if (t.ressource == other_res)]
-
-                            if len([t for t in other_res_tiles if t.num_collapsed and (t.number in [6, 8])]) == 1:
-                                n_res = [t.number for t in other_res_tiles if ((t.num_collapsed) and (t.number in [6, 8]))][0]
-                                # other_n_res = {6: 8, 8: 6}[n_res]
-
-                                for n in [t for t in other_res_tiles if not t.num_collapsed]:
-                                    n.num_options = [num for num in n.num_options if num not in [6, 8]]
-
-                """
-                else:
-                    has_two68 = {}
-                    for ressource in self.ressource_list:
-                        tiles_of_ressource = [t for t in self.tiles if t.ressource == ressource]
-                        has_two68[ressource] = any([t.number == 6 for t in tiles_of_ressource]) and any([t.number == 8 for t in tiles_of_ressource])
-                    ress_has_two68 = any([has_two68.values()])
-
-                    if ress_has_two68:
-                        for ress_to_fix in [
-                            res
-                            for res in self.ressource_list
-                            if len([t for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 1
-                        ]:
-                            t_res = [t for t in self.tiles if (t.ressource == ress_to_fix)]
-                            n_res = [t.number for t in t_res if ((t.num_collapsed) and (t.number in [6, 8]))][0]
-                            other_n_res = {6: 8, 8: 6}[n_res]
-                            for n in [t for t in t_res if not t.num_collapsed]:
-                                n.num_options = [num for num in n.num_options if num != other_n_res]
-                """
+                    # If ressource already has exactly one 6 or one 8, remove the other 6 and 8 options
+                    if len([t for t in ressource_tiles if t.num_collapsed and (t.number in [6, 8])]) == 1:
+                        for n in [t for t in ressource_tiles if not t.num_collapsed]:
+                            n.num_options = [num for num in n.num_options if num not in [6, 8]]
 
     def step_number_collapse(self) -> bool:
         # pick the tile with the least options (from non-collapsed tiles)
@@ -444,10 +411,6 @@ class BoardGenerator:
         for t in self.tiles:
             t.reset_number_options()
 
-        # TODO: create a list, used as a stack, storing the changes applied,
-        # to backtrack in case there is no valid options left
-        # self.num_stack = []
-
         self.board_num_options = self.numbers_deck.copy()
         self.board_num_options = [n for n in self.board_num_options if n != 7]
 
@@ -456,19 +419,6 @@ class BoardGenerator:
             if not still_valid:
                 # print("reset")
                 return False
-
-        # TODO: debug for count of failure
-        return True
-
-        # TODO: if, in 5-6 player games, more than one ressource type has both 6 and 8
-        # (meaning one has neither), board is invalid
-        if self.more_players and any(
-            len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
-            for res in self.ressource_list[:-1]
-        ):
-            return False
-
-        self.numbers_deck = [t.number for t in self.tiles]
 
         return True
 
@@ -658,7 +608,7 @@ class BoardGenerator:
                 for res in self.ressource_list[:-1]
             ):
                 n_fail_repeats += 1
-                return {"ressources": self.tiles, "ports": self.ports}
+                # return {"ressources": self.tiles, "ports": self.ports}
 
         print(f"Ran {n_test} generations, {n_fail_dead_end} dead ends, failed nuber repeats {n_fail_repeats} times")
 
