@@ -306,11 +306,15 @@ class BoardGenerator:
             # print("Removed otions:")
             # for k, v in self.stack[i][1].items():
             #    print(k.get_coords(), v)
-            print("Dead end! Attempting to track back")
+            # return False
+            # print("Dead end! Attempting to track back")
 
             good_track_back = False
             while not good_track_back:
                 # Restore removed options from last step
+                if len(self.stack) == 0:
+                    # print("Track back failed!")
+                    return False
                 self.stack[-1][0].res_collapsed = False
                 for k, v in self.stack[-1][1].items():
                     k.ressource_options += v
