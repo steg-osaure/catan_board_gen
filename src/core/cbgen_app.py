@@ -117,6 +117,7 @@ class CBGenApp(toga.App):
         self.board_canvas = toga.Canvas(
             style=Pack(flex=1.8),
             on_resize=self.on_board_canvas_resize,
+            on_press=self.on_board_canvas_press,
         )
 
         # Buttons to get a description of what the options do
@@ -187,3 +188,7 @@ class CBGenApp(toga.App):
         """
         self.board_canvas_size = width, height
         self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
+
+    def on_board_canvas_press(self, widget: toga.Widget, x: float, y: float, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+        print(f"test {x}, {y}")
+        print(self.board_draw.convert_coord_to_tile((x, y)))

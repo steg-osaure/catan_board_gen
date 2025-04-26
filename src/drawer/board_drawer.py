@@ -36,8 +36,13 @@ class BoardDrawer:
         """Convert hex grid coordinates to screen coordinates for rendering."""
         return (
             self.width // 2 + 2 * self.tile_size * (self.offset_x + tile_coords[0] + math.cos(math.pi / 3) * tile_coords[1]),
-            self.height // 2 - 15 + 2 * self.tile_size * math.sin(math.pi / 3) * (self.offset_y + tile_coords[1]),
+            self.height // 2 + 2 * self.tile_size * math.sin(math.pi / 3) * (self.offset_y + tile_coords[1]),
         )
+
+    def convert_coord_to_tile(self, screen_coords: tuple[float, float]) -> tuple[int, int]:
+        ty = (screen_coords[1] - self.height / 2) / (2 * self.tile_size * math.sin(math.pi / 3)) - self.offset_y
+        tx = (screen_coords[0] - self.width / 2) / (2 * self.tile_size) - self.offset_x - math.cos(math.pi / 3) * ty
+        return (round(tx), round(ty))
 
     def set_tilesize(self) -> None:
         # Adding zero to avoid errors if no tiles are present
