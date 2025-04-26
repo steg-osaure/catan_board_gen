@@ -39,14 +39,14 @@ briefcase run
 This is the roadmap for future updates:
 
    - 0.0.3: round up base game implementation
-      - [ ] Implement random port placement (with big border tiles)
+      - [X] Implement random port placement (with big border tiles)
       - [ ] Add smaller board (3 player) variant
 
    - 0.1.0: Making code cleaner:
-      - [ ] Refactor code such that:
-         - [ ] one class handles the UI and display 
-         - [ ] one class handles the board logic
-         - [ ] one class for the individual tiles (already the case)
+      - [X] Refactor code such that:
+         - [X] one class handles the UI and display 
+         - [X] one class handles the board logic
+         - [X] one class for the individual tiles (already the case)
       - [ ] Fix remaining temporary solutions and TODOs
 
    - 0.2.0: Seafarers boards

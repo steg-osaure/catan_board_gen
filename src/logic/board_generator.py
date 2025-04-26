@@ -84,20 +84,20 @@ class BoardGenerator:
         # Initialize the position of the 3-wide edge tiles
         edge_positions = {
             False: [
-                ((0, -3), (1, 0)),
-                ((-3, 0), (1, -1)),
-                ((-3, 3), (0, -1)),
-                ((0, 3), (-1, 0)),
-                ((3, 0), (-1, 1)),
-                ((3, -3), (0, 1)),
+                ((0, -3), (1, 0), [0, 0, -1]),
+                ((-3, 0), (1, -1), [1, 1, 0]),
+                ((-3, 3), (0, -1), [2, 2, 1]),
+                ((0, 3), (-1, 0), [3, 3, 2]),
+                ((3, 0), (-1, 1), [4, 4, 3]),
+                ((3, -3), (0, 1), [5, 5, 4]),
             ],
             True: [
-                ((0, -4), (1, 0)),
-                ((-4, 0), (1, -1)),
-                ((-4, 4), (0, -1)),
-                ((-1, 4), (-1, 0)),
-                ((3, 0), (-1, 1)),
-                ((3, -4), (0, 1)),
+                ((0, -4), (1, 0), [0, 0, -1]),
+                ((-4, 0), (1, -1), [1, 1, 0]),
+                ((-4, 4), (0, -1), [2, 2, 1]),
+                ((-1, 4), (-1, 0), [3, 3, 2]),
+                ((3, 0), (-1, 1), [4, 4, 3]),
+                ((3, -4), (0, 1), [5, 5, 4]),
             ],
         }[self.more_players]
 
@@ -112,7 +112,9 @@ class BoardGenerator:
         ]
 
         # Additional 1-wide edge tiles for 5/6 player boards
-        more_positions = {False: [], True: [((3, -1), (0, 0)), ((-1, -3), (0, 0)), ((-4, 1), (0, 0)), ((0, 3), (0, 0))]}[self.more_players]
+        more_positions = {False: [], True: [((3, -1), (0, 0), [-1]), ((-1, -3), (0, 0), [1]), ((-4, 1), (0, 0), [2]), ((0, 3), (0, 0), [-2])]}[
+            self.more_players
+        ]
         more_ressources = {False: [], True: [[None], [None], ["None"], ["sheep"]]}[self.more_players]
 
         # Randomize edge tile placement
@@ -124,14 +126,14 @@ class BoardGenerator:
 
         # Initialize port placement following the edge tiles placement
         edge_positions += more_positions
-        more_ressources += more_ressources
+        edge_ressources += more_ressources
 
         self.ports = [
             PortTile(
                 x=position[0][0] + i * position[1][0],
                 y=position[0][1] + i * position[1][1],
                 ressource=ressource,
-                orientation=-1,
+                orientation=position[2][i],
             )
             for position, ressource_list in zip(edge_positions, edge_ressources)
             for i, ressource in enumerate(ressource_list)
