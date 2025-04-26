@@ -31,3 +31,7 @@ class PortTile(Tile):
         super().__init__(x, y)
         self.ressource = ressource
         self.orientation = orientation
+
+    def print_info(self) -> None:
+        """Print the tile's details."""
+        print(f"({self.x}, {self.y}) {self.ressource} {self.orientation}")

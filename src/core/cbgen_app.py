@@ -72,7 +72,9 @@ class CBGenApp(toga.App):
     def generate_pressed(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         """Handler for the generate board button press event."""
         self.board_gen.set_options(self.options)
-        self.current_board = self.board_gen.call()
+        # self.current_board = self.board_gen.call()
+        # self.current_board = self.board_gen.debug_call()
+        self.current_board = self.board_gen.debug_ressources()
         # self.board_draw.draw_board(self.current_board, self.board_canvas.style)
         self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
         # self.draw()
@@ -190,5 +192,8 @@ class CBGenApp(toga.App):
         self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
 
     def on_board_canvas_press(self, widget: toga.Widget, x: float, y: float, **kwargs: Any) -> None:  # pylint: disable=unused-argument
-        print(f"test {x}, {y}")
-        print(self.board_draw.convert_coord_to_tile((x, y)))
+        # print(f"test {x}, {y}")
+        tx, ty = self.board_draw.convert_coord_to_tile((x, y))
+        for t in self.current_board["ressources"] + self.current_board["ports"]:
+            if t.get_coords() == (tx, ty):
+                t.print_info()

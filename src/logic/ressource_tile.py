@@ -95,6 +95,7 @@ class RessourceTile(Tile):
 
         r.shuffle(self.num_options)
         self.number = self.num_options[0]
+        self.num_options = []
         self.num_collapsed = True
 
     def res_collapse(self, res: str | None = None) -> None:
@@ -117,8 +118,9 @@ class RessourceTile(Tile):
 
         r.shuffle(self.ressource_options)
         self.ressource = self.ressource_options[0]
+        self.ressource_options = []
         self.res_collapsed = True
 
     def print_info(self) -> None:
         """Print the tile's details."""
-        print(f"({self.x}, {self.y}) {self.ressource} {self.number}")
+        print(f"({self.x}, {self.y}) {self.ressource} {self.number}, {self.ressource_options}, {self.num_options}")

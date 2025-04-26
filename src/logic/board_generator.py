@@ -17,6 +17,7 @@ class BoardGenerator:
 
     ressource_list: list[str] = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
     relative_neighbours: list[tuple[int, int]] = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+    max_neighbours = {"wheat": 1, "wood": 1, "sheep": 1, "brick": 0, "stone": 0, "desert": 0}
 
     def __init__(self, options: OptionHandler) -> None:
         """Initialize the application, creating the main window and UI components."""
@@ -29,6 +30,10 @@ class BoardGenerator:
         self.remaining_ressources: list[str] = []
         self.board_num_options: list[int] = []
         self.stack: list[dict[str, Any]] = []
+        # debug settings
+        self.restart_debug: bool = True
+        self.is_ressource_valid: bool = False
+        self.is_number_valid: bool = False
 
         # options, for the logic:
         self.set_options(options)
@@ -140,16 +145,69 @@ class BoardGenerator:
             if ressource is not None
         ]
 
-    def call(self) -> dict[str, Any]:
+    def call(self) -> dict[str, RessourceTile | PortTile]:
         """Handler for the generate board button press event."""
         self.stack = []
         self.get_port_tiles()
-
         self.shuffle_and_check()
-
         board = {"ressources": self.tiles, "ports": self.ports}
 
         return board
+
+    def debug_ressources(self) -> dict[str, Any]:
+        self.stack = []
+        n_fail_cluster = 0
+        n_fail_dead_end = 0
+        n_test = 500
+        for i in range(n_test):
+            self.get_port_tiles()
+            is_valid = self.collapse_ressource()
+            if not is_valid:
+                n_fail_dead_end += 1
+                continue
+            if not self.check_ressource_clusters():
+                n_fail_cluster += 1
+        print(f"Ran {n_test} generations, {n_fail_dead_end} dead ends, failed cluster {n_fail_cluster} times")
+
+        board = {"ressources": self.tiles, "ports": self.ports}
+        return board
+
+    def debug_call(self) -> dict[str, Any]:
+        if self.restart_debug:
+            self.stack = []
+            self.get_port_tiles()
+            self.get_ressource_tiles()
+            self.get_numbers()
+            self.board_num_options = self.numbers_deck.copy()
+            self.board_num_options = [n for n in self.board_num_options if n != 7]
+            self.remaining_ressources = self.ressource_deck.copy()
+            self.update_ressources_near_ports()
+            self.restart_debug = False
+            self.is_ressource_valid = False
+            self.is_number_valid = False
+
+        if not self.is_ressource_valid:
+            self.restart_debug = not self.step_ressource_collapse()
+            self.is_ressource_valid = all(t.res_collapsed for t in self.tiles)
+            return {"ressources": self.tiles, "ports": self.ports}
+
+        if not self.check_ressource_clusters():
+            self.restart_debug = True
+            return {"ressources": self.tiles, "ports": self.ports}
+
+        if not self.is_number_valid:
+            self.restart_debug = not self.step_number_collapse()
+            self.is_number_valid = all(t.num_collapsed for t in self.tiles)
+            return {"ressources": self.tiles, "ports": self.ports}
+
+        if self.more_players and any(
+            len([t.ressource for t in self.tiles if ((t.ressource == res) and t.num_collapsed and (t.number in [6, 8]))]) == 0
+            for res in self.ressource_list[:-1]
+        ):
+            self.restart_debug = True
+            return {"ressources": self.tiles, "ports": self.ports}
+
+        return {"ressources": self.tiles, "ports": self.ports}
 
     def shuffle_and_check(self) -> None:
         """Shuffle the tiles and numbers until a valid board configuration is found."""
@@ -157,13 +215,13 @@ class BoardGenerator:
         # Shuffling the tiles until a valid permutation is found
         is_valid = False
         while not is_valid:
-            print("Collapsing ressources")
+            # print("Collapsing ressources")
             is_valid = self.collapse_ressource()
 
         # Shuffling the numbers until a valid permutation is found
         is_valid = False
         while not is_valid:
-            print("Collapsing numbers")
+            # print("Collapsing numbers")
             is_valid = self.collapse_number()
 
     def update_ressources_near_ports(self) -> None:
@@ -204,23 +262,45 @@ class BoardGenerator:
                 if not t.res_collapsed:
                     t.ressource_options = [res for res in t.ressource_options if res != t_col.ressource]
 
+        # remove resource from neighboring tiles' options
         if self.options.get_option("Ressource_clusters"):
-            # remove resource from neighboring tiles' options
-            non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.res_collapsed)]
-            for n in non_collapsed_neighbours:
+            # prevent "string" issue: get same ressource neighbours of the collapsed tile
+            same_res_neighbours = [t for t in self.tiles if ((t.get_coords() in t_col.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))]
+            # same_res_neighbours = []
+
+            # Get non collapsed neighbours
+            to_propagate = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and not t.res_collapsed)]
+            for n in to_propagate:
 
                 # check number of collapsed neighbors:
-                nb_res_neighbours = len(
-                    [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and (t.res_collapsed) and (t.ressource == t_col.ressource))]
-                )
+                collapsed_neighbours = [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == t_col.ressource))]
+                # also consider same ressource tiles connected to the newly collapsed one, but not directly to this one
+                nb_res_neighbours = len(set(collapsed_neighbours + same_res_neighbours))
 
-                # TODO: rework: tiles can still generate in "strings":
-                # at the end of a string, there is only one neighbor of the same type,
-                # but the string can be more than 2 tiles long
-                if ((t_col.ressource in ["wheat", "wood", "sheep"]) & (nb_res_neighbours >= 2)) | (
-                    (t_col.ressource in ["brick", "stone", "desert"]) & (nb_res_neighbours >= 1)
-                ):
+                if nb_res_neighbours > self.max_neighbours[t_col.ressource]:
                     n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
+
+            """
+            # get neighbours of the same type:
+            same_ressource_neighbours = [t for t in self.tiles if (t.get_coords() in t_col.neighbours() and t.ressource == t_col.ressource)]
+
+            for same_n in same_ressource_neighbours:
+                non_collapsed_neighbours = [t for t in self.tiles if (t.get_coords() in same_n.neighbours() and not t.res_collapsed)]
+                for n in non_collapsed_neighbours:
+
+                    # check number of collapsed neighbors:
+                    nb_res_neighbours = len(
+                        [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and (t.res_collapsed) and (t.ressource == t_col.ressource))]
+                    )
+
+                    # TODO: rework: tiles can still generate in "strings":
+                    # at the end of a string, there is only one neighbor of the same type,
+                    # but the string can be more than 2 tiles long
+                    if ((t_col.ressource in ["wheat", "wood", "sheep"]) & (nb_res_neighbours >= 1)) | (
+                        (t_col.ressource in ["brick", "stone", "desert"]) & (nb_res_neighbours >= 0)
+                    ):
+                        n.ressource_options = [res for res in n.ressource_options if res != t_col.ressource]
+            """
 
     def step_ressource_collapse(self) -> bool:
 
@@ -250,27 +330,16 @@ class BoardGenerator:
 
         step = 0
         while not all(t.res_collapsed for t in self.tiles):
-            print(step)
+            # print(step)
             still_valid = self.step_ressource_collapse()
 
             if not still_valid:
-                print("reset")
+                # print("reset")
                 return False
             step += 1
 
-        self.ressource_deck = [t.ressource for t in self.tiles]
-
-        # Temporary solutions for resource clusters
-        # only if option is set
-        if self.options.get_option("Ressource_clusters"):
-            nb_neighbours = self.ressource_neighbours()
-            valid = [
-                ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1))
-                for (r, n) in zip(self.ressource_deck, nb_neighbours)
-            ]
-            if not all(valid):
-                return False
-
+        # TODO: this is debug
+        # return self.check_ressource_clusters()
         return True
 
     def propagate_number_collapse(self, t_col: RessourceTile) -> None:
@@ -369,7 +438,7 @@ class BoardGenerator:
         while not all(t.num_collapsed for t in self.tiles):
             still_valid = self.step_number_collapse()
             if not still_valid:
-                print("reset")
+                # print("reset")
                 return False
 
         # TEMPORARY: if, in 5-6 player games, more than one ressource type has both 6 and 8
@@ -414,12 +483,19 @@ class BoardGenerator:
             list: A list of boolean values indicating if each tile passes the check.
         """
 
-        nb_neighbours = self.ressource_neighbours()
-        valid = [
-            ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1))
-            for (r, n) in zip(self.ressource_deck, nb_neighbours)
-        ]
-        return valid
+        self.ressource_deck = [t.ressource for t in self.tiles]
+
+        # Temporary solutions for resource clusters
+        # only if option is set
+        if self.options.get_option("Ressource_clusters"):
+            nb_neighbours = self.ressource_neighbours()
+            valid = [
+                ((r in ["wheat", "wood", "sheep"]) & (n < 2)) | ((r in ["brick", "stone", "desert"]) & (n < 1))
+                for (r, n) in zip(self.ressource_deck, nb_neighbours)
+            ]
+            if not all(valid):
+                return False
+        return True
 
     def check_ports(self) -> list[bool]:
         """Validate that resource tiles do not touch their corresponding ports.
