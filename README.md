@@ -47,7 +47,7 @@ This is the roadmap for future updates:
          - [X] one class handles the UI and display 
          - [X] one class handles the board logic
          - [X] one class for the individual tiles (already the case)
-      - [ ] Fix remaining temporary solutions and TODOs
+      - [X] Fix remaining temporary solutions and TODOs
 
    - 0.2.0: Seafarers boards
       - [ ] Add option to use seafarer boards, implement board layouts from scenarios that do not require exploration

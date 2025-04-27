@@ -122,31 +122,29 @@ class BoardGenerator:
         more_ressources = {False: [], True: [[None], [None], ["None"], ["sheep"]]}[self.more_players]
 
         # Randomize edge tile placement
-        # TODO: make this random generation behave differently when using Balanced Port options
+        # Random generation behaves differently when using Balanced Port options
         if self.options.get_option("Random_ports"):
             if self.options.get_option("Balanced_ports"):
                 # we want the 3-wide tiles to alternate between having 2 and 1 ports
-                idx_1 = [0, 1, 2]
-                idx_2 = [3, 4, 5]
-                r.shuffle(idx_1)
-                r.shuffle(idx_2)
-                idx = [idx_1, idx_2]
-                r.shuffle(idx)
-                print(idx)
-                idx = [i for i in idx[0]] + [i for i in idx[1]]
-                print(idx)
+                shuffle_type_a = [0, 1, 2]
+                shuffle_type_b = [3, 4, 5]
+                r.shuffle(shuffle_type_a)
+                r.shuffle(shuffle_type_b)
+                randomize_a_b_order = [shuffle_type_a, shuffle_type_b]
+                r.shuffle(randomize_a_b_order)
+                idx = randomize_a_b_order[0] + randomize_a_b_order[1]
                 edge_ressources = [edge_ressources[i] for i in idx]
 
                 # for 1-wide tiles in the case of 5/6 player games, we just want to randomize the two ones with the ports
                 # and we want them to not be directly next to a port from a 3-wide tile
                 if self.more_players:
 
-                    more_idx_1 = [0, 1]
-                    more_idx_2 = [2, 3]
-                    r.shuffle(more_idx_1)
-                    r.shuffle(more_idx_2)
-                    more_idx = [more_idx_1, more_idx_2] if (idx[0] < 3) else [more_idx_2, more_idx_1]
-                    more_idx = [i for i in more_idx[0]] + [i for i in more_idx[1]]
+                    shuffle_other_a = [0, 1]
+                    shuffle_other_b = [2, 3]
+                    r.shuffle(shuffle_other_a)
+                    r.shuffle(shuffle_other_b)
+                    other_a_b_order = [shuffle_other_a, shuffle_other_b] if (idx[0] < 3) else [shuffle_other_b, shuffle_other_a]
+                    more_idx = other_a_b_order[0] + other_a_b_order[1]
 
                     more_ressources = [more_ressources[i] for i in more_idx]
 
