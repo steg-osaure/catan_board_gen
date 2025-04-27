@@ -86,48 +86,75 @@ class BoardGenerator:
         edge_positions = {
             False: [
                 ((0, -3), (1, 0), [0, 0, -1]),
-                ((-3, 0), (1, -1), [1, 1, 0]),
                 ((-3, 3), (0, -1), [2, 2, 1]),
-                ((0, 3), (-1, 0), [3, 3, 2]),
                 ((3, 0), (-1, 1), [4, 4, 3]),
+                ((-3, 0), (1, -1), [1, 1, 0]),
+                ((0, 3), (-1, 0), [3, 3, 2]),
                 ((3, -3), (0, 1), [5, 5, 4]),
             ],
             True: [
                 ((0, -4), (1, 0), [0, 0, -1]),
-                ((-4, 0), (1, -1), [1, 1, 0]),
                 ((-4, 4), (0, -1), [2, 2, 1]),
-                ((-1, 4), (-1, 0), [3, 3, 2]),
                 ((3, 0), (-1, 1), [4, 4, 3]),
+                ((-4, 0), (1, -1), [1, 1, 0]),
+                ((-1, 4), (-1, 0), [3, 3, 2]),
                 ((3, -4), (0, 1), [5, 5, 4]),
             ],
         }[self.more_players]
-
-        # Initialize the port ressources present on the 3-wide edge tiles
-        edge_ressources = [
-            ["None", None, "sheep"],
-            [None, "stone", None],
-            ["None", None, "wheat"],
-            [None, "wood", None],
-            ["None", None, "brick"],
-            [None, "None", None],
-        ]
 
         # Additional 1-wide edge tiles for 5/6 player boards
         more_positions = {False: [], True: [((3, -1), (0, 0), [-1]), ((-1, -3), (0, 0), [1]), ((-4, 1), (0, 0), [2]), ((0, 3), (0, 0), [-2])]}[
             self.more_players
         ]
+        edge_positions += more_positions
+
+        # Initialize the port ressources present on the 3-wide edge tiles
+        edge_ressources = [
+            ["None", None, "sheep"],
+            ["None", None, "wheat"],
+            ["None", None, "brick"],
+            [None, "stone", None],
+            [None, "wood", None],
+            [None, "None", None],
+        ]
+
+        # Additional 1-wide edge tiles for 5/6 player boards
         more_ressources = {False: [], True: [[None], [None], ["None"], ["sheep"]]}[self.more_players]
 
         # Randomize edge tile placement
         # TODO: make this random generation behave differently when using Balanced Port options
         if self.options.get_option("Random_ports"):
-            r.shuffle(edge_positions)
-            r.shuffle(edge_ressources)
-            r.shuffle(more_positions)
-            r.shuffle(more_ressources)
+            if self.options.get_option("Balanced_ports"):
+                # we want the 3-wide tiles to alternate between having 2 and 1 ports
+                idx_1 = [0, 1, 2]
+                idx_2 = [3, 4, 5]
+                r.shuffle(idx_1)
+                r.shuffle(idx_2)
+                idx = [idx_1, idx_2]
+                r.shuffle(idx)
+                print(idx)
+                idx = [i for i in idx[0]] + [i for i in idx[1]]
+                print(idx)
+                edge_ressources = [edge_ressources[i] for i in idx]
+
+                # for 1-wide tiles in the case of 5/6 player games, we just want to randomize the two ones with the ports
+                # and we want them to not be directly next to a port from a 3-wide tile
+                if self.more_players:
+
+                    more_idx_1 = [0, 1]
+                    more_idx_2 = [2, 3]
+                    r.shuffle(more_idx_1)
+                    r.shuffle(more_idx_2)
+                    more_idx = [more_idx_1, more_idx_2] if (idx[0] < 3) else [more_idx_2, more_idx_1]
+                    more_idx = [i for i in more_idx[0]] + [i for i in more_idx[1]]
+
+                    more_ressources = [more_ressources[i] for i in more_idx]
+
+            else:
+                r.shuffle(edge_ressources)
+                r.shuffle(more_ressources)
 
         # Initialize port placement following the edge tiles placement
-        edge_positions += more_positions
         edge_ressources += more_ressources  # type: ignore
 
         self.ports = [
