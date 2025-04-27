@@ -2,7 +2,7 @@
 [tool.briefcase]
 project_name = "Catan Board Generator"
 bundle = "com.example"
-version = "0.0.2"
+version = "0.1.0"
 url = "https://github.com/steg-osaure/catan_board_gen"
 license.file = "LICENSE"
 author = "Steg Osaure"

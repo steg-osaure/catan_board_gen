@@ -13,14 +13,42 @@ from core.option_handler import OptionHandler
 
 
 class BoardGenerator:
-    """Class to handle the generation of Catan boards."""
+    """Class responsible for generating randomized Catan game boards with constraints.
+
+    This class uses a Wave Function Collapse (WFC)-inspired algorithm to generate
+    Catan boards by assigning resources and numbers to tiles
+    while enforcing various balance constraints.
+
+    Features include:
+    - Preventing large clusters of the same resource type.
+    - Ensuring ports are not adjacent to matching resource tiles.
+    - Preventing most frequent numbers to repeat on one type of ressource.
+    - Adapting the board layout for 3-4 player and 5-6 player games.
+
+    Attributes:
+        ressource_list (list[str]): List of all possible resource types.
+        relative_neighbours (list[tuple[int, int]]): Relative coordinates for neighboring tiles.
+        max_neighbours (dict[str, int]): Maximum allowed same-resource neighbors per tile.
+        numbers_deck (list[int]): Numbers available for assignment to tiles.
+        centers_deck (list[tuple[int, int]]): Coordinates for tile centers.
+        ressource_deck (list[str]): Resource types available for assignment.
+        tiles (list[RessourceTile]): List of resource tiles on the board.
+        init_ports (list[tuple[int, int, str, int]]): Initial configuration for port tiles.
+        ports (list[PortTile]): List of ports on the board.
+        remaining_ressources (list[str]): Resources still available during collapse.
+        board_num_options (list[int]): Numbers still available during collapse.
+        stack (list[dict[str, Any]]): Stack for internal state management.
+        options (OptionHandler): Options controlling board generation behavior.
+        more_players (bool): Whether the game is configured for 5-6 players.
+        offset (int): Adjustment for larger boards (5-6 player variant).
+    """
 
     ressource_list: list[str] = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
     relative_neighbours: list[tuple[int, int]] = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
     max_neighbours = {"wheat": 1, "wood": 1, "sheep": 1, "brick": 0, "stone": 0, "desert": 0}
 
     def __init__(self, options: OptionHandler) -> None:
-        """Initialize the application, creating the main window and UI components."""
+        """Initialize the BoardGenerator, setting up decks, tiles, ports, and options."""
         self.numbers_deck: list[int] = []
         self.centers_deck: list[tuple[int, int]] = []
         self.ressource_deck: list[str] = []
@@ -35,13 +63,14 @@ class BoardGenerator:
         self.set_options(options)
 
     def set_options(self, options: OptionHandler) -> None:
+        """Set generation options based on user-selected parameters."""
+
         self.options = options
         self.more_players = self.options.get_option("More_players")
         self.offset = 0 + 1 * self.more_players
 
     def get_numbers(self) -> None:
-        """Generate the deck of numbers for the tiles, including handling desert tiles."""
-        # the deck of numbers to use
+        """Prepare the deck of tile numbers, taking into account desert tiles and player count."""
         n_commun = 2 + self.offset
         n_rare = 1 + self.offset
         self.numbers_deck = [2, 12] * n_rare + [i for i in range(3, 12) if i != 7] * n_commun
@@ -49,22 +78,20 @@ class BoardGenerator:
         self.assign_desert()
 
     def assign_desert(self) -> None:
-        # Assign the desert tiles with number 7
+        """Insert the number 7 for desert tiles into the number deck at appropriate positions."""
         desert_idx = where(self.ressource_deck, "desert")
         # loop backwards to avoid index issues
         for i in desert_idx[::-1]:
             self.numbers_deck.insert(i, 7)
 
     def get_centers(self) -> None:
-        """Generate tile data, including resources and coordinates."""
-
-        # generate the list of used tiles coordinates
+        """Compute the coordinates for all resource tiles based on board size."""
         column_range = range(-2 - self.offset, 3 + self.offset)
         row_ranges = {j: range(max(-2 - j - self.offset, -2 - self.offset), min(3 - j, 3)) for j in column_range}
         self.centers_deck = [(i, j) for j in column_range for i in row_ranges[j]]
 
     def get_ressources(self) -> None:
-        # the deck of resources to use
+        """Prepare the deck of available resource types based on player count."""
         n_desert = 1 + self.offset
         n_inorganic = 3 + 2 * self.offset
         n_organic = 4 + 2 * self.offset
@@ -72,7 +99,7 @@ class BoardGenerator:
         self.ressource_deck = n_inorganic * ["brick", "stone"] + n_organic * ["wood", "sheep", "wheat"] + n_desert * ["desert"]
 
     def get_ressource_tiles(self) -> None:
-
+        """Initialize all resource tiles with their coordinates and assign available resources."""
         self.get_centers()
         self.get_ressources()
         self.get_numbers()
@@ -81,7 +108,7 @@ class BoardGenerator:
         self.tiles = [RessourceTile(x, y) for (x, y) in self.centers_deck]
 
     def get_port_tiles(self) -> None:
-
+        """Generate the port tiles and assign randomized or balanced port resources based on options."""
         # Initialize the position of the 3-wide edge tiles
         edge_positions = {
             False: [
@@ -168,28 +195,24 @@ class BoardGenerator:
         ]
 
     def call(self) -> dict[str, Any]:
-        """Handler for the generate board button press event."""
+        """Trigger the full board generation process, returning a dictionary of tiles and ports."""
         self.stack = []
         self.get_port_tiles()
-        self.shuffle_and_check()
-        board = {"ressources": self.tiles, "ports": self.ports}
 
-        return board
-
-    def shuffle_and_check(self) -> None:
-        """Shuffle the tiles and numbers until a valid board configuration is found."""
-
-        # Shuffling the tiles until a valid permutation is found
+        # Generate ressource tile placement until a valid configuration is found
         is_valid = False
         while not is_valid:
             is_valid = self.collapse_ressource()
 
-        # Shuffling the numbers until a valid permutation is found
+        # Generate number placement until a valid configuration is found
         is_valid = False
         while not is_valid:
             is_valid = self.collapse_number()
 
+        return {"ressources": self.tiles, "ports": self.ports}
+
     def update_ressources_near_ports(self) -> None:
+        """Adjust resource options near ports to ensure balanced port distribution if required."""
         if self.options.get_option("Balanced_ports"):
             for p in self.ports:
                 # remove resource option from the neighboring tiles
@@ -200,13 +223,22 @@ class BoardGenerator:
                     t.ressource_options.remove(p.ressource)
 
     def pick_tile_to_collapse(self, to_check: str) -> RessourceTile:
-        # pick the tile with the least options (from non-collapsed tiles)
+        """Select the next tile to collapse based on the smallest number of available options.
+
+        Args:
+            to_check (str): Specify 'ressource' or 'number' collapse mode.
+
+        Returns:
+            RessourceTile: The selected tile to collapse next.
+        """
+
         def check(t: RessourceTile) -> bool:
             return t.res_collapsed if to_check == "ressource" else t.num_collapsed
 
         def options(t: RessourceTile) -> int:
             return len(t.ressource_options) if to_check == "ressource" else len(t.num_options)
 
+        # pick the tile with the least options (from non-collapsed tiles)
         idx_list = [i for (i, t) in enumerate(self.tiles) if not check(t)]
         opt_list = [options(t) for t in self.tiles if not check(t)]
         argmin = where(opt_list, min(opt_list))
@@ -215,9 +247,7 @@ class BoardGenerator:
         return self.tiles[idx_to_collapse]
 
     def propagate_ressource_collapse(self, t_col: RessourceTile) -> None:
-
-        # propagate the option decrease
-
+        """Update the resource options of neighboring tiles after a resource is collapsed."""
         # remove resource that was chosen from deck,
         if t_col.ressource in self.remaining_ressources:
             self.remaining_ressources.pop(self.remaining_ressources.index(t_col.ressource))
@@ -251,6 +281,7 @@ class BoardGenerator:
                 self.propagate_ressource_cluster_collapse(t_col.ressource, additional_check_tiles, indirect_neighbours)
 
     def propagate_ressource_cluster_collapse(self, ressource: str, tiles_to_check: list[RessourceTile], additional_neighbours: list[RessourceTile]) -> None:
+        """Restrict resource options for neighboring tiles to prevent oversized clusters of the same resource."""
         for n in tiles_to_check:
             # Get collapsed neighbours of the ressource to check
             collapsed_neighbours = [t for t in self.tiles if ((t.get_coords() in n.neighbours()) and t.res_collapsed and (t.ressource == ressource))]
@@ -263,10 +294,13 @@ class BoardGenerator:
                 n.ressource_options = [res for res in n.ressource_options if res != ressource]
 
     def step_ressource_collapse(self) -> bool:
+        """Perform one step of resource collapse and propagate the consequences.
 
+        Returns:
+            bool: True if no dead end occurred, False otherwise.
+        """
         t_col = self.pick_tile_to_collapse(to_check="ressource")
         t_col.res_collapse()
-
         self.propagate_ressource_collapse(t_col)
 
         # Did we run into a dead end?
@@ -275,24 +309,29 @@ class BoardGenerator:
         return True
 
     def collapse_ressource(self) -> bool:
-        """Apply the Wave Function Collapse algorithm for resources."""
+        """Collapse all resource tiles using Wave Function Collapse until a valid assignment is achieved.
 
-        # reset the tiles
+        Returns:
+            bool: True if successful, False if a dead end is encountered.
+        """
+        # reset the tiles and available ressources
         self.get_ressource_tiles()
-
         self.remaining_ressources = self.ressource_deck.copy()
 
+        # Remove options next to ports
         self.update_ressources_near_ports()
 
+        # Collapse tiles one by one until successful, or abort when we run into a dead end
         while not all(t.res_collapsed for t in self.tiles):
             still_valid = self.step_ressource_collapse()
-
             if not still_valid:
                 return False
 
+        # If all tiles are collapsed and no dead end where found, ressource placement is succesfull
         return True
 
     def propagate_number_collapse(self, t_col: RessourceTile) -> None:
+        """Update number options of neighboring tiles after a number is collapsed, handling adjacency and clusters."""
         n_col = t_col.number
 
         # remove number that was chosen from number deck,
@@ -319,6 +358,7 @@ class BoardGenerator:
             self.propagate_number_repeate_collapse(t_col)
 
     def propagate_number_repeate_collapse(self, t_col: RessourceTile) -> None:
+        """Restrict number repetition on tiles sharing the same resource type, handling 6/8 placement rules."""
         n_col = t_col.number
         # remove number from same ressource tiles' options
         non_collapsed_same_res = [t for t in self.tiles if (t.ressource == t_col.ressource and not t.num_collapsed)]
@@ -352,6 +392,11 @@ class BoardGenerator:
                             n.num_options = [num for num in n.num_options if num not in [6, 8]]
 
     def step_number_collapse(self) -> bool:
+        """Perform one step of number collapse and propagate the consequences.
+
+        Returns:
+            bool: True if no dead end occurred, False otherwise.
+        """
         # pick the tile with the least options (from non-collapsed tiles)
         t_col = self.pick_tile_to_collapse(to_check="number")
 
@@ -366,28 +411,23 @@ class BoardGenerator:
         return True
 
     def collapse_number(self) -> bool:
-        """Apply the Wave Function Collapse algorithm to assign numbers to tiles.
-
-        This method ensures that numbers are distributed across the board
-        in a valid configuration without violating constraints such as:
-        - Adjacent tiles cannot have the same number.
-        - Numbers 6 and 8 cannot be adjacent to each other or another 6/8.
+        """Collapse number for all tiles using Wave Function Collapse until a valid assignment is achieved.
 
         Returns:
-            bool: True if a valid configuration is found, False otherwise.
+            bool: True if successful, False if a dead end is encountered.
         """
-
+        # reset the tiles' number options and available numbers
         self.get_numbers()
-
         for t in self.tiles:
             t.reset_number_options()
-
         self.board_num_options = self.numbers_deck.copy()
         self.board_num_options = [n for n in self.board_num_options if n != 7]
 
+        # Collapse tiles one by one until successful, or abort when we run into a dead end
         while not all(t.num_collapsed for t in self.tiles):
             still_valid = self.step_number_collapse()
             if not still_valid:
                 return False
 
+        # If all tiles are collapsed and no dead end where found, number placement is succesfull
         return True
