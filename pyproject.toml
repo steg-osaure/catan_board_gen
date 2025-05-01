@@ -12,7 +12,7 @@ author_email = "stegosaure@tutanota.com"
 formal_name = "Catan Board Generator"
 description = "Generate random, balanced boards for the board game Catan"
 long_description = """Generate random, balanced boards for the board game Catan."""
-icon = "src/core/ressource/catanboardgen"
+icon = "src/core/resources/catanboardgen"
 sources = ["src/catanboardgen", "src/core", "src/logic", "src/drawer"]
 
 requires = []
