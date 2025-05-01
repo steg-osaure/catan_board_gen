@@ -21,17 +21,33 @@ Windows, Mac and iOS, so refeer to the following section to build from source.
 
 ### Building it from source
 
-You will need to install beeware and briefcase, instructions can be found on 
+You will need to install the dependencies for beeware and briefcase, instructions can be found on 
 [this tutorial](https://docs.beeware.org/en/latest/tutorial/tutorial-0.html).
 
-After having installed and activated a `beeware` environment, do the following:
+On Ubuntu 20.04, you can setup a virtual environment with all necesarry python packages
+by doing:
 
 ```
 git clone https://github.com/steg-osaure/catan_board_gen
-cd catan_board_gen
+python executables/first_time_setup.py 
+source setup_environment.sh
+```
+
+You might be able to get a running setup on other linux distributions / MacOS by editing the 
+[requiremnts file](https://github.com/steg-osaure/catan_board_gen/blob/master/settings/requirements.txt)
+
+Afterward, you can use the `briefcase` commands to build from soure, or run in development mode:
+```
+# Build from source:
 briefcase create
 briefcase build
 briefcase run
+
+# Run in development mode:
+briefcase dev
+
+# Create a compiled binary:
+briefcase package
 ```
 
 ## Planned updates:
