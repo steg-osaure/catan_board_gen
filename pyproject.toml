@@ -11,12 +11,11 @@ author_email = "stegosaure@tutanota.com"
 [tool.briefcase.app.catanboardgen]
 formal_name = "Catan Board Generator"
 description = "Generate random, balanced boards for the board game Catan"
-long_description = """More details about the app should go here."""
+long_description = """Generate random, balanced boards for the board game Catan."""
+icon = "src/core/ressource/catanboardgen"
 sources = ["src/catanboardgen", "src/core", "src/logic", "src/drawer"]
-icon = "src/catanboardgen/resources/catanboardgen.png"
 
-requires = [ "json"
-]
+requires = []
 
 app="core/"
 
@@ -32,9 +31,9 @@ requires = [
 requires = [
     "pycairo==1.26.0",
     "PyGObject==3.48.1",
-    "Travertino==0.3.0",
+    "travertino==0.3.0",
     "toga-core==0.4.2",
-    "toga-gtk~=0.4.0",
+    "toga-gtk==0.4.2",
 ]
 
 
