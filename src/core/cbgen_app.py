@@ -11,7 +11,21 @@ from .option_handler import OptionHandler
 
 
 class CBGenApp(toga.App):
-    """Core application class."""
+    """
+    Core application class for the Catan Board Generator (CBGen) app.
+
+    This class manages the main lifecycle and user interface of the application. It initializes
+    and displays the main window, sets up interactive components to select the different board generation options,
+    and calls the generation and drawing of the board.
+
+    Attributes:
+        options (OptionHandler): Loads and manages the options, to be passed to the board generator and drawer.
+        board_gen (BoardGenerator): Generates board layouts based on selected options.
+        board_draw (BoardDrawer): Handles drawing of the generated board on a canvas.
+        board_canvas (toga.Canvas): The canvas widget used to display the board.
+        option_widget (toga.ScrollContainer): Scrollable container holding switches and buttons
+                                              for user interaction with board generation options.
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -23,7 +37,10 @@ class CBGenApp(toga.App):
         self.option_widget: toga.ScrollContainer
 
     def startup(self) -> None:
-        """Initialize the application, creating the main window and UI components."""
+        """
+        Initialize the application, setting up the main window and populating it
+        with the board canvas and the options widget.
+        """
 
         self.options = OptionHandler(self.paths.app / "default_options.json")
         self.board_gen = BoardGenerator(self.options)
@@ -41,10 +58,11 @@ class CBGenApp(toga.App):
         self.main_window.show()
 
     def create_board_widget(self) -> None:
-        """Create and initialize the application's UI components.
+        """
+        Create and configure the board canvas widget, including resize and click handlers.
 
-        This includes the canvas for the board, switches for options, and buttons
-        for generating boards and showing option descriptions.
+        The canvas displays the generated board, allows resizing, and shows tile info
+        when clicked.
         """
 
         # Define handlers for the canvas
@@ -68,26 +86,16 @@ class CBGenApp(toga.App):
         # Pass to the drawer
         self.board_draw.set_canvas(self.board_canvas)
 
-    def initialize_window(self) -> None:
-        # put them in a box
-        main_box = toga.Box(
-            children=[
-                self.board_canvas,
-                self.option_widget,
-            ],
-            style=Pack(
-                direction="column",
-                padding_top=5,
-                padding_right=5,
-                padding_bottom=5,
-                padding_left=5,
-            ),
-        )
-
-        # put box in window
-        self.main_window.content = main_box
-
     def create_options_widget(self) -> None:
+        """
+        Create the UI components that allow users to toggle generation options and view
+        descriptions of each.
+
+        This includes:
+        - Toggle switches for options
+        - Description buttons to display info dialogs
+        - A button to generate and draw a new board
+        """
 
         # Buttons to get a description of what the options do
         def show_description(widget: toga.Widget, **kwargs: Any) -> None:  # pylint: disable=unused-argument
@@ -165,3 +173,26 @@ class CBGenApp(toga.App):
             ),
             horizontal=False,
         )
+
+    def initialize_window(self) -> None:
+        """
+        Combine the canvas and options widget into a layout and assign it to the main window.
+        """
+
+        # put board and option widgets in a box
+        main_box = toga.Box(
+            children=[
+                self.board_canvas,
+                self.option_widget,
+            ],
+            style=Pack(
+                direction="column",
+                padding_top=5,
+                padding_right=5,
+                padding_bottom=5,
+                padding_left=5,
+            ),
+        )
+
+        # pass the box as the window content
+        self.main_window.content = main_box
