@@ -4,30 +4,26 @@ from logic.tile import Tile
 
 
 class PortTile(Tile):
-    """Represents a single port tile on the Catan board.
+    """Represents a port tile on the Catan board.
+
+    Ports offer resource exchange advantages and are placed on the edge of the board.
+    Each port may specialize in a specific resource or be generic (3:1 trade).
 
     Attributes:
-        x (int): The x-coordinate of the tile in hex grid space.
-        y (int): The y-coordinate of the tile in hex grid space.
-        coords (tuple): A tuple containing the (x, y) coordinates of the tile.
-        ressource (str): The type of resource this tile represents (e.g., "brick", "wood").
-        number (int): The number token value assigned to this tile.
-        num_collapsed (bool): Whether the number has been assigned (collapsed) for this tile.
-        num_options (list): Possible number token values for the tile.
-        res_collapsed (bool): Whether the resource has been assigned (collapsed) for this tile.
-        res_options (list): Possible resource types for the tile.
+        ressource (str): The resource type the port is associated with.
+        orientation (int): The orientation index determining which side of the hexagon the port faces.
     """
 
     def __init__(self, x: int, y: int, ressource: str, orientation: int) -> None:
-        """Initialize a Tile instance.
+        """Initialize a PortTile with coordinates, associated resource, and orientation.
 
         Args:
-            x (int): The x-coordinate of the tile in hex grid space. Defaults to 0.
-            y (int): The y-coordinate of the tile in hex grid space. Defaults to 0.
-            ressource (str): The type of resource the tile represents.\
-                Defaults to "desert".
-            number (int): The number token value assigned to this tile. Defaults to None.
+            x (int): The x-coordinate of the tile in hex grid space.
+            y (int): The y-coordinate of the tile in hex grid space.
+            ressource (str): The resource type the port is associated with.
+            orientation (int): The orientation index determining which side of the hexagon the port faces.
         """
+
         super().__init__(x, y)
         self.ressource = ressource
         self.orientation = orientation

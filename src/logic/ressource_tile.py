@@ -5,17 +5,17 @@ from logic.tile import Tile
 
 
 class RessourceTile(Tile):
-    """Represents a single tile on the Catan board.
+    """Represents a resource-producing tile on the Catan board.
+
+    Inherits from the Tile class and supports collapse mechanics for assigning resources and number tokens
+    using a Wave Function Collapse-inspired approach.
 
     Attributes:
-        x (int): The x-coordinate of the tile in hex grid space.
-        y (int): The y-coordinate of the tile in hex grid space.
-        ressource (str): The type of resource this tile represents (e.g., "brick", "wood").
-        number (int): The number token value assigned to this tile.
-        num_collapsed (bool): Whether the number has been assigned (collapsed) for this tile.
-        num_options (list): Possible number token values for the tile.
-        res_collapsed (bool): Whether the resource has been assigned (collapsed) for this tile.
-        ressource_options (list): Possible resource types for the tile.
+        collapsed (dict[str, bool]): Tracks whether the resource or number has been finalized.
+        options (dict[str, list[str | int]]): Possible values still available for resource and number assignment.
+        value (dict[str, str | int]): The currently assigned resource and number (may be incomplete).
+        default_options (dict[str, list[str | int]]): Initial option pool for both attributes.
+        default_value (dict[str, str | int]): Placeholder values before collapse.
     """
 
     def __init__(self, x: int, y: int) -> None:
@@ -28,10 +28,7 @@ class RessourceTile(Tile):
         # store x, y (hex coordinates)
         super().__init__(x, y)
 
-        # store ressource
-        self.ressource: str
-        self.number: int
-
+        # Default options for the Wave Function Collapse
         self.default_options: dict[str, list[int | str]] = {
             "number": list(range(2, 7)) + list(range(8, 13)),
             "ressource": Tile.ressource_list.copy(),
@@ -42,7 +39,7 @@ class RessourceTile(Tile):
             "ressource": None,
         }
 
-        # info for Wave Function Collapsed
+        # info for Wave Function Collapse
         self.collapsed: dict[str:bool] = {"number": False, "ressource": False}
         self.options: dict[str : list[str | int]] = self.default_options.copy()
         self.value: dict[str, int | str] = self.default_value.copy()
@@ -51,6 +48,11 @@ class RessourceTile(Tile):
         # self.reset_collapse("number")
 
     def reset_collapse(self, type: str) -> None:
+        """Reset the collapse state for a specific attribute ('number' or 'ressource').
+
+        Args:
+            type (str): The attribute to reset. Must be either 'number' or 'ressource'.
+        """
         self.collapsed[type] = False
 
         if type == "number" and self.value["ressource"] == "desert":
@@ -64,6 +66,11 @@ class RessourceTile(Tile):
         self.value[type] = self.default_value[type]
 
     def collapse(self, type: str) -> None:
+        """Collapse a specific attribute by selecting a single, random  value among the tile's options.
+
+        Args
+            type (str): The attribute to collapse ('number' or 'ressource').
+        """
 
         r.shuffle(self.options[type])
         self.value[type] = self.options[type][0]
@@ -72,4 +79,4 @@ class RessourceTile(Tile):
 
     def print_info(self) -> None:
         """Print the tile's details."""
-        print(f"({self.x}, {self.y}) {self.ressource} {self.number}, {self.ressource_options}, {self.num_options}")
+        print(f"({self.x}, {self.y}) {self.value["ressource"]} {self.value["number"]}, {self.options["ressource"]}, {self.options["number"]}")
