@@ -194,8 +194,8 @@ class BoardGenerator:
             if ressource is not None
         ]
 
-    def call(self) -> dict[str, Any]:
-        """Trigger the full board generation process, returning a dictionary of tiles and ports."""
+    def generate(self) -> None:
+        """Trigger the full board generation process."""
         self.stack = []
         self.get_port_tiles()
 
@@ -209,6 +209,8 @@ class BoardGenerator:
         while not is_valid:
             is_valid = self.collapse_number()
 
+    def get_board(self) -> dict[str, Any]:
+        """Return the board."""
         return {"ressources": self.tiles, "ports": self.ports}
 
     def update_ressources_near_ports(self) -> None:

@@ -76,6 +76,12 @@ class BoardDrawer:
         tx = (screen_coords[0] - self.width / 2) / (2 * self.tile_size) - self.offset_x - math.cos(math.pi / 3) * ty
         return (round(tx), round(ty))
 
+    def get_tile(self, tx: int, ty: int) -> RessourceTile | PortTile | None:
+        for t in self.tiles + self.ports:
+            if t.get_coords() == (tx, ty):
+                return t
+        return None
+
     def set_size(self, canvas_size: tuple[int, int]) -> None:
         """Update the information about the size of the canvas and re-computes the size of the tiles.
 
@@ -152,7 +158,7 @@ class BoardDrawer:
             with self.board_canvas.Stroke(line_width=2) as stroker:
                 stroker.arc(x, y, self.tile_size / 2)
 
-            c = "BLACK" * ((number != 6) and (number != 8)) + "RED" * ((number == 6) or (number == 8))
+            c = {True: "RED", False: "BLACK"}[number in [6, 8]]
             with self.board_canvas.Fill(x, y, color=c) as text_filler:
                 text_filler.write_text(str(number), x - w / 2.0, y - h / 2.0, font, Baseline.TOP)
 

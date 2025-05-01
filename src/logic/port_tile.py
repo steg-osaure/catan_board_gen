@@ -31,3 +31,6 @@ class PortTile(Tile):
     def print_info(self) -> None:
         """Print the tile's details."""
         print(f"({self.x}, {self.y}) {self.ressource} {self.orientation}")
+
+    def get_info_text(self) -> str:
+        return f"Port \nCoordinates: ({self.x}, {self.y})\nRessource: {self.ressource}"

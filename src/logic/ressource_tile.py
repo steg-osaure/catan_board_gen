@@ -1,5 +1,7 @@
 """Module containing the Tile class."""
 
+from typing import Any
+
 import random as r
 from logic.tile import Tile
 
@@ -29,54 +31,57 @@ class RessourceTile(Tile):
         super().__init__(x, y)
 
         # Default options for the Wave Function Collapse
-        self.default_options: dict[str, list[int | str]] = {
+        self.default_options: dict[str, Any] = {
             "number": list(range(2, 7)) + list(range(8, 13)),
             "ressource": Tile.ressource_list.copy(),
         }
 
-        self.default_value: dict[str, int | str] = {
+        self.default_value: dict[str, Any] = {
             "number": 0,
-            "ressource": None,
+            "ressource": "None",
         }
 
         # info for Wave Function Collapse
-        self.collapsed: dict[str:bool] = {"number": False, "ressource": False}
-        self.options: dict[str : list[str | int]] = self.default_options.copy()
-        self.value: dict[str, int | str] = self.default_value.copy()
+        self.collapsed: dict[str, bool] = {"number": False, "ressource": False}
+        self.options: dict[str, Any] = self.default_options.copy()
+        self.value: dict[str, Any] = self.default_value.copy()
 
         # self.reset_collapse("ressource")
         # self.reset_collapse("number")
 
-    def reset_collapse(self, type: str) -> None:
+    def reset_collapse(self, attribute: str) -> None:
         """Reset the collapse state for a specific attribute ('number' or 'ressource').
 
         Args:
-            type (str): The attribute to reset. Must be either 'number' or 'ressource'.
+            attribute (str): The attribute to reset. Must be either 'number' or 'ressource'.
         """
-        self.collapsed[type] = False
+        self.collapsed[attribute] = False
 
-        if type == "number" and self.value["ressource"] == "desert":
-            self.options[type] = []
-            self.collapsed[type] = True
-            self.value[type] = 7
+        if attribute == "number" and self.value["ressource"] == "desert":
+            self.options[attribute] = []
+            self.collapsed[attribute] = True
+            self.value[attribute] = 7
             return
 
-        self.options[type] = self.default_options[type]
-        self.collapsed[type] = False
-        self.value[type] = self.default_value[type]
+        self.options[attribute] = self.default_options[attribute]
+        self.collapsed[attribute] = False
+        self.value[attribute] = self.default_value[attribute]
 
-    def collapse(self, type: str) -> None:
+    def collapse(self, attribute: str) -> None:
         """Collapse a specific attribute by selecting a single, random  value among the tile's options.
 
         Args
-            type (str): The attribute to collapse ('number' or 'ressource').
+            attribute (str): The attribute to collapse ('number' or 'ressource').
         """
 
-        r.shuffle(self.options[type])
-        self.value[type] = self.options[type][0]
-        self.options[type] = []
-        self.collapsed[type] = True
+        r.shuffle(self.options[attribute])
+        self.value[attribute] = self.options[attribute][0]
+        self.options[attribute] = []
+        self.collapsed[attribute] = True
 
     def print_info(self) -> None:
         """Print the tile's details."""
         print(f'({self.x}, {self.y}) {self.value["ressource"]} {self.value["number"]}, {self.options["ressource"]}, {self.options["number"]}')
+
+    def get_info_text(self) -> str:
+        return f"Ressource Tile\nCoordinates: ({self.x}, {self.y})\nRessource: {self.value['ressource']}\nNumber: {self.value['number']}"
