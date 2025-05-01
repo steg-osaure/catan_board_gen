@@ -13,17 +13,6 @@ class Tile:
     relative_neighbours = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
     ressource_list: list[str] = ["brick", "wood", "sheep", "wheat", "stone", "desert"]
 
-    # coordinates of the corners
-    # in hex grid coordinates:
-    # corners = [
-    #    (1 / 3, 1 / 3),
-    #    (-1 / 3, 2 / 3),
-    #    (-2 / 3, 1 / 3),
-    #    (-1 / 3, -1 / 3),
-    #    (1 / 3, -2 / 3),
-    #    (2 / 3, -1 / 3),
-    # ]
-
     def __init__(self, x: int, y: int) -> None:
         """Initialize a Tile instance.
 

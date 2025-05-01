@@ -84,7 +84,7 @@ class BoardDrawer:
             edge_size (int, optional): Size of the hexagonal edges. Defaults to 30.
             fill_color (str, optional): Fill color for the tile. Defaults to "BLANK".
         """
-        number, ressource = tile.number, tile.ressource
+        number, ressource = tile.value["number"], tile.value["ressource"]
         x, y = self.convert_coord_to_screen(tile.get_coords())
         fill_color = self.color[ressource]
         font = toga.Font(family=SANS_SERIF, size=self.tile_size // 2)
