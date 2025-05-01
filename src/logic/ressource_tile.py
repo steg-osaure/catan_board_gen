@@ -79,4 +79,4 @@ class RessourceTile(Tile):
 
     def print_info(self) -> None:
         """Print the tile's details."""
-        print(f"({self.x}, {self.y}) {self.value["ressource"]} {self.value["number"]}, {self.options["ressource"]}, {self.options["number"]}")
+        print(f'({self.x}, {self.y}) {self.value["ressource"]} {self.value["number"]}, {self.options["ressource"]}, {self.options["number"]}')

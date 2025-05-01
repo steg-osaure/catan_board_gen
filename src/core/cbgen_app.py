@@ -42,6 +42,7 @@ class CBGenApp(toga.App):
         # initiate all the widgets
         # create and show the window
         self.create_widgets()
+        self.board_draw.set_canvas(self.board_canvas)
         self.initialize_window()
 
         self.main_window.show()
@@ -73,7 +74,8 @@ class CBGenApp(toga.App):
         """Handler for the generate board button press event."""
         self.board_gen.set_options(self.options)
         self.current_board = self.board_gen.call()
-        self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
+        self.board_draw.set_board(self.current_board)
+        self.board_draw.draw()
 
     def on_option_switch(self, widget: toga.Widget) -> None:  # pylint: disable=unused-argument
         """Handle changes to toggle switches in the UI.
@@ -185,7 +187,8 @@ class CBGenApp(toga.App):
             **kwargs: Additional arguments passed by the Toga framework.
         """
         self.board_canvas_size = width, height
-        self.board_draw.draw(self.current_board, self.board_canvas, self.board_canvas_size)
+        self.board_draw.set_size(self.board_canvas_size)
+        self.board_draw.draw()
 
     def on_board_canvas_press(self, widget: toga.Widget, x: float, y: float, **kwargs: Any) -> None:  # pylint: disable=unused-argument
         return
